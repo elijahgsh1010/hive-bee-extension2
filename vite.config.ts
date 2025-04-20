@@ -76,8 +76,6 @@ export default defineConfig({
       },
     },
 
-    vueDevTools(),
-
     VueI18nPlugin({
       include: "src/locales/**",
       globalSFCScope: true,

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-const displayName = __DISPLAY_NAME__
+let displayName = __DISPLAY_NAME__
+displayName = "Hive Honey Bee";
 // const version = __VERSION__
 </script>
 

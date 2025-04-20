@@ -12,7 +12,7 @@ const [major, minor, patch, label = "0"] = version
 
 export default {
   author: {
-    email: "mubaidr@gmail.com",
+    email: "elijahgsh@gmail.com",
   },
   name: env.mode === "staging" ? `[INTERNAL] ${name}` : displayName || name,
   description,
@@ -33,7 +33,8 @@ export default {
     {
       all_frames: false,
       js: ["src/content-script/index.ts"],
-      matches: ["*://*/*"],
+      // matches: ["*://*/*"],
+      matches: ["https://dev.hive.hrnetgroup.com/*", "https://www.linkedin.com/*"],
     },
   ],
   side_panel: {
@@ -43,7 +44,7 @@ export default {
   options_page: "src/ui/options-page/index.html",
   offline_enabled: true,
   host_permissions: ["<all_urls>"],
-  permissions: ["storage", "tabs", "background", "sidePanel"],
+  permissions: ["storage", "tabs", "background", "sidePanel", "activeTab"],
   web_accessible_resources: [
     {
       resources: [

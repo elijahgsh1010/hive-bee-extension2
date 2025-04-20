@@ -1,64 +1,76 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+
+const isLoggedIn = ref(false);
+const isShowPanel = ref(false);
+
+onMounted(() => {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs[0]?.id) {
+      chrome.tabs.sendMessage(
+        tabs[0].id,
+        { type: "CHECK_IFRAME_STATE" },
+        (response: { isVisible?: boolean }) => {
+          if (response?.isVisible) {
+            showPanel();
+          }
+        }
+      );
+    }
+  });
+
+  chrome.storage.local.get('hiveAccessToken', function (result) {
+    if(result.hiveAccessToken){
+      isLoggedIn.value = true;
+    }
+  })
+  
+})
+
+const showPanel = () => {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs[0]?.id) {
+      chrome.tabs.sendMessage(tabs[0].id, { type: "SHOW_PANEL" });
+      isShowPanel.value = true;
+    }
+  });
+}
+
+const hidePanel = () => {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs[0]?.id) {
+      chrome.tabs.sendMessage(tabs[0].id, { type: "HIDE_PANEL" });
+      isShowPanel.value = false;
+    }
+  });
+}
+
+</script>
 
 <template>
   <div>
     <div class="hero">
       <div class="hero-content text-center">
         <div class="max-w-md">
-          <h1>Hello there</h1>
-          <p>
-            Provident cupiditate voluptatem et in. Quaerat fugiat ut assumenda
-            excepturi exercitationem quasi. In deleniti eaque aut repudiandae et
-            a id nisi.
-          </p>
+          <h1>Hello</h1>
 
-          <div class="flex gap-2 justify-center mb-4">
-            <RouterLink
-              to="/common/features"
-              class="btn btn-primary"
-            >
-              <i-ph-list-heart />
-              Features
-            </RouterLink>
-            <RouterLink
-              to="/common/pricing"
-              class="btn btn-primary"
-            >
-              <i-ph-presentation-chart />
-              Pricing
-            </RouterLink>
-          </div>
-
-          <RouterLink
-            to="/common/account/login"
-            class="btn btn-secondary btn-lg"
+          <a
+              href="https://dev.hive.hrnetgroup.com"
+              class="btn btn-secondary btn-lg"
+              v-if="!isLoggedIn"
+              target="_blank"
           >
-            <i-ph-rocket-launch />
-            Get Started Now
-          </RouterLink>
+          <i-ph-rocket-launch />
+            Login Now
+          </a>
 
           <br />
 
-          <RouterLink
-            to="/action-popup/playground"
-            class="btn btn-link"
-          >
-            Playground
-          </RouterLink>
+          <div class="max-w-md mt-4">
+            <button class="btn btn-primary btn-lg" @click="showPanel" v-if="!isShowPanel">
+              Show Panel
+            </button>
 
-          <a
-            class="btn btn-link"
-            href="https://github.com/mubaidr/vite-vue3-browser-extension-v3"
-          >
-            Documentation
-          </a>
-
-          <a
-            class="btn btn-link"
-            href="https://mubaidr.js.org"
-          >
-            Support
-          </a>
+          </div>
         </div>
       </div>
     </div>

@@ -10,12 +10,8 @@ import { Notivue, Notification } from 'notivue'
       <RouterView />
     </div>
 
-    <AppFooter />
-
     <Notivue v-slot="item">
       <Notification :item="item" />
     </Notivue>
   </div>
 </template>
-
-<style scoped></style>

@@ -2,45 +2,275 @@
 const testStore = useTestStore()
 const { increment, decrement } = testStore
 const { count, name } = storeToRefs(testStore)
+
+const userName = ref('');
+const notes = ref('');
+const experiences = ref('');
+const isOnProfilePage = ref(false);
+const route = useRoute();
+
+onMounted(() => {
+  console.log('onMounted');
+
+  window.addEventListener("message", (event) => {
+    if (event.data.type === "NAME_RESULT") {
+      userName.value =  event.data.element;
+    }
+
+    if(event.data.type === "EXPERIENCE_RESULT") {
+      experiences.value = event.data.element;
+    }
+
+    if(event.data.type === "SET_PAGE") {
+      isOnProfilePage.value = event.data.isOnProfilePage;
+    }
+  });
+
+  getName();
+  getExperiences();
+  checkIfAtProfilePage();
+})
+
+const getAccessToken = () => {
+
+}
+
+const getName = () => {
+  console.log('getName');
+  window.parent.postMessage({ type: "GET_LINKEDIN_NAME", selector: ".artdeco-hoverable-trigger" }, "*");
+}
+
+const getExperiences = () => {
+  window.parent.postMessage({ type: "GET_LINKEDIN_EXPERIENCE", selector: ".artdeco-card.pv-profile-card" }, "*");
+}
+
+const sendToHive = () => {
+  console.log('sendToHive');
+}
+
+const checkIfAtProfilePage = () => {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs[0]?.id) {
+      chrome.tabs.sendMessage(
+          tabs[0].id,
+          { type: "CHECK_IF_ON_PROFILE_PAGE" },
+          (response: { isOnProfilePage?: boolean }) => {
+            if (response?.isOnProfilePage) {
+              isOnProfilePage.value = true;
+              console.log('on profile page')
+            }
+          }
+      );
+     
+    }
+  });
+}
+
 </script>
 
 <template>
-  <div>
-    <ul>
-      <li>This is a simple example showing Vue.js and DaisyUI.</li>
-      <li>You can access relevant chrome apis here.</li>
-    </ul>
-
-    <!-- Counter Component -->
-    <div class="text-center">
+  <div class="container" v-if="!isOnProfilePage">
+    <div class="flex justify-center">
+      <div id="loading" style="align-items: center; justify-content: center; display: flex; flex-direction: column; height: 450px;">
+        <div class="bee">
+          <div class="body">
+            <div class="line"></div>
+          </div>
+          <div>
+            <div class="wing-right"></div>
+            <div class="wing-left"></div>
+          </div>
+        </div>
+        <div style="margin-top: 16px; text-align: center;">
+          Go to user profile page
+        </div>
+      </div>
+    </div>
+  </div>
+  <div v-if="isOnProfilePage">
+    <div class="text-left">
       <div>
-        <div class="text-lg font-semibold mb-4">Name: {{ name }}</div>
+        <div class="text-lg font-semibold mb-4">Name</div>
         <input
-          v-model="name"
+          v-model="userName"
           type="text"
           class="input input-primary"
         />
       </div>
       <br />
-      <div class="text-lg font-semibold mb-4">Count: {{ count }}</div>
+      <div>
+        <div class="text-lg font-semibold mb-4">Experiences</div>
+        <textarea
+          v-model="experiences"
+          rows="5"
+          class="input input-primary"
+        />
+      </div>
+      <br />
+      <div>
+        <div class="text-lg font-semibold mb-4">Notes</div>
+        <textarea
+            v-model="notes"
+            rows="5"
+            class="input input-primary"
+        />
+      </div>
+      <br />
       <div class="flex gap-2 justify-center">
         <button
           class="btn btn-primary"
-          @click="decrement"
+          @click="sendToHive"
         >
-          <i-ph-minus />
-          Decrement
-        </button>
-        <button
-          class="btn btn-primary"
-          @click="increment"
-        >
-          <i-ph-plus />
-          Increment
+          <i-ph-rocket-launch />
+          Send to Hive
         </button>
       </div>
     </div>
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+
+.container {
+  width: 100%;
+  height: 100%;
+}
+
+.bee {
+  position: relative;
+  align-self: center;
+  width: 60px;
+  height: 35px;
+  -webkit-animation: to-fly 0.4s infinite;
+  animation: to-fly 0.4s infinite;
+}
+.body {
+  position: relative;
+  width: 45px;
+  height: 30px;
+  border: 4px solid #fbc02d;
+  background: #ffeb3b;
+  border-radius: 20px;
+  perspective: 2500px;
+  z-index: 99;
+}
+.body:before,
+.body:after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.body:before {
+  right: 100%;
+  top: 3px;
+  border-top: 6px solid transparent;
+  border-right: 13px solid #fbc02d;
+  border-bottom: 6px solid transparent;
+}
+.body:after {
+  right: 97%;
+  top: 6px;
+  border-top: 3px solid transparent;
+  border-right: 6px solid #ffeb3b;
+  border-bottom: 3px solid transparent;
+}
+.body .line {
+  position: relative;
+  left: 9px;
+  height: 25px;
+  width: 20px;
+  background: #fbc02d;
+}
+.wing-right,
+.wing-left {
+  position: absolute;
+  top: -20px;
+  left: 12px;
+  width: 20px;
+  height: 25px;
+  background: #ffeb3b;
+  border: 4px solid #fbc02d;
+  border-radius: 100%;
+}
+.wing-right {
+  left: 15px;
+  transform: skew(-20deg);
+  -webkit-animation: wing-beat-right 0.25s infinite;
+  animation: wing-beat-right 0.25s infinite;
+  transform-origin: bottom;
+  z-index: 9;
+}
+.wing-left {
+  transform: skew(20deg);
+  -webkit-animation: wing-beat-left 0.25s infinite;
+  animation: wing-beat-left 0.25s infinite;
+  transform-origin: bottom;
+  z-index: 999;
+}
+@-webkit-keyframes to-fly {
+  50% {
+    transform: translateY(-3px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+@keyframes to-fly {
+  50% {
+    transform: translateY(-3px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+@-webkit-keyframes wing-beat-right {
+  50% {
+    transform: rotateX(60deg) skew(-20deg) rotateZ(25deg);
+  }
+  100% {
+    transform: rotateX(0) skew(-20deg);
+  }
+}
+@keyframes wing-beat-right {
+  50% {
+    transform: rotateX(60deg) skew(-20deg) rotateZ(25deg);
+  }
+  100% {
+    transform: rotateX(0) skew(-20deg);
+  }
+}
+@-webkit-keyframes wing-beat-left {
+  50% {
+    transform: rotateX(-65deg) skew(20deg) rotateZ(-10deg);
+  }
+  100% {
+    transform: rotateX(0) skew(20deg);
+  }
+}
+@keyframes wing-beat-left {
+  50% {
+    transform: rotateX(-65deg) skew(20deg) rotateZ(-10deg);
+  }
+  100% {
+    transform: rotateX(0) skew(20deg);
+  }
+}
+@-webkit-keyframes pollen {
+  0% {
+    left: -90px;
+  }
+  100% {
+    left: -95px;
+  }
+}
+@keyframes pollen {
+  0% {
+    left: -90px;
+  }
+  100% {
+    left: -95px;
+  }
+}
+
+</style>

@@ -1,15 +1,48 @@
-// This file is used to style the iframe that is injected into the page
-.crx-iframe {
-  border: none;
-  border-radius: 8px;
-  box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.2),
-    0 -1px 0px rgba(0, 0, 0, 0.02);
-  background-color: #fff;
-  margin: 2em;
+/* Styles for the draggable iframe */
+.draggable-container {
   position: fixed;
-  bottom: 0;
-  right: 0;
-  width: 420px;
-  min-height: 340px;
+  top: 50px;
+  left: 78%;
+  width: 400px; 
+  height: 600px;
+  z-index: 1000;
+  background: white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  cursor: move;
+  transition: box-shadow 0.2s ease;
+}
+
+.iframe-header {
+  background: dodgerblue;
+  color: white;
+  padding: 5px 10px;
+  font-size: 14px;
+  cursor: move;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.iframe-header button {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* When minimized, adjust the container styles */
+.draggable-container.minimized {
+  //height: auto;
+  //width: 200px;
+  //padding: 5px 10px;
+}
+
+/* Style the iframe itself */
+.draggable-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
 }
