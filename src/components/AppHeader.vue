@@ -12,7 +12,7 @@
           alt="logo"
           class="h-8 w-auto"
         />
-        <div class="text-base font-semibold">Hive Honey Bee</div>
+        <div class="text-base font-semibold"> Hive</div>
       </RouterLink>
     </div>
 <!--    <div class="flex-none">-->

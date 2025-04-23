@@ -364,6 +364,10 @@
     "onElementRemoval": true,
     "useCountdown": true,
     "applyTheme": true,
-    "createRef": true
+    "createRef": true,
+    "Slot": true,
+    "Slots": true,
+    "$api": true,
+    "createParamString": true
   }
 }

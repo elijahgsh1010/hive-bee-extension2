@@ -1,28 +1,27 @@
 <script setup lang="ts">
 
+import {$api} from "src/utils/api";
+
 const isLoggedIn = ref(false);
 const isShowPanel = ref(false);
+const userName = ref('');
+const url = import.meta.env.VITE_BASE_URL;
 
-onMounted(() => {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (tabs[0]?.id) {
-      chrome.tabs.sendMessage(
-        tabs[0].id,
-        { type: "CHECK_IFRAME_STATE" },
-        (response: { isVisible?: boolean }) => {
-          if (response?.isVisible) {
-            showPanel();
-          }
-        }
-      );
-    }
-  });
-
-  chrome.storage.local.get('hiveAccessToken', function (result) {
-    if(result.hiveAccessToken){
-      isLoggedIn.value = true;
+onMounted(async () => {
+  
+  chrome.storage.local.get('showPanel', async function (result) {
+    if(result.showPanel){
+      isShowPanel.value = true;
     }
   })
+
+  chrome.storage.local.get('hiveAccessToken', async function (result) {
+    if(result.hiveAccessToken){
+      isLoggedIn.value = true;
+      var res = await $api(`/api/userApp/get-user-basic-info`, { method: 'GET' });
+      userName.value = res.username;
+    }
+  });
   
 })
 
@@ -51,13 +50,16 @@ const hidePanel = () => {
     <div class="hero">
       <div class="hero-content text-center">
         <div class="max-w-md">
-          <h1>Hello</h1>
-
+          <div>
+            <h1>Hello</h1>
+            <p> {{ userName }} </p>
+          </div>
+          
           <a
-              href="https://dev.hive.hrnetgroup.com"
-              class="btn btn-secondary btn-lg"
-              v-if="!isLoggedIn"
-              target="_blank"
+            :href="url"
+            class="btn btn-secondary btn-lg"
+            v-if="!isLoggedIn"
+            target="_blank"
           >
           <i-ph-rocket-launch />
             Login Now
@@ -67,7 +69,7 @@ const hidePanel = () => {
 
           <div class="max-w-md mt-4">
             <button class="btn btn-primary btn-lg" @click="showPanel" v-if="!isShowPanel">
-              Show Panel
+              Show Profile Panel
             </button>
 
           </div>

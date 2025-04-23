@@ -74,6 +74,13 @@ function injectIframe() {
       const element = document.querySelectorAll(event.data.selector);
       event.source!.postMessage({ type: "NAME_RESULT", element: element[0]?.firstElementChild.ariaLabel }, { targetOrigin: event.origin });
     }
+    
+    if(event.data.type === "GET_LINKEDIN_DESIGNATION") {
+      const titleElement = document?.querySelectorAll('.text-body-medium')
+      var title = titleElement[0]?.textContent || null
+
+      event.source!.postMessage({ type: "DESIGNATION_RESULT", element: title?.trimStart().trimEnd() }, { targetOrigin: event.origin });
+    }
 
     if (event.data.type === "GET_LINKEDIN_EXPERIENCE") {
       const element = document.querySelectorAll(event.data.selector);
@@ -112,7 +119,7 @@ function injectIframe() {
     chrome.storage.local.set({showPanel: false});
   });
 
-  if(window.location.href.includes("hive.hrnetgroup.com")) {
+  if(window.location.href.includes("hive.hrnetgroup.com") || window.location.href.includes("localhost")) {
     const token = localStorage.getItem('accessToken');
     if(token) {
       chrome.storage.local.set({hiveAccessToken: token});
@@ -134,6 +141,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "HIDE_PANEL") {
     window.postMessage({ type: "HIDE_PANEL" }, "*");
+    isIframeVisible = false;
+    chrome.storage.local.set({showPanel: false});
   }
   return true; 
 });

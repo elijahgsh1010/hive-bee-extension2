@@ -1,22 +1,30 @@
 <script setup lang="ts">
+import {$api} from "src/utils/api";
+
 const testStore = useTestStore()
 const { increment, decrement } = testStore
-const { count, name } = storeToRefs(testStore)
 
-const userName = ref('');
+const name = ref('');
+const email = ref('');
+const designation = ref('');
 const notes = ref('');
 const experiences = ref('');
+const education = ref('');
 const isOnProfilePage = ref(false);
 const route = useRoute();
 
-onMounted(() => {
+onMounted(async () => {
   console.log('onMounted');
 
   window.addEventListener("message", (event) => {
     if (event.data.type === "NAME_RESULT") {
-      userName.value =  event.data.element;
+      name.value =  event.data.element;
     }
 
+    if (event.data.type === "DESIGNATION_RESULT") {
+      designation.value =  event.data.element;
+    }
+    
     if(event.data.type === "EXPERIENCE_RESULT") {
       experiences.value = event.data.element;
     }
@@ -27,16 +35,14 @@ onMounted(() => {
   });
 
   getName();
+  getDesignation();
   getExperiences();
   checkIfAtProfilePage();
+  
+  await getPosition();
 })
 
-const getAccessToken = () => {
-
-}
-
 const getName = () => {
-  console.log('getName');
   window.parent.postMessage({ type: "GET_LINKEDIN_NAME", selector: ".artdeco-hoverable-trigger" }, "*");
 }
 
@@ -44,8 +50,17 @@ const getExperiences = () => {
   window.parent.postMessage({ type: "GET_LINKEDIN_EXPERIENCE", selector: ".artdeco-card.pv-profile-card" }, "*");
 }
 
+const getDesignation = () => {
+  window.parent.postMessage({ type: "GET_LINKEDIN_DESIGNATION", selector: "" }, "*");
+}
+
+const getPosition = async () => {
+  var res = await $api(`/api/position/get-all-position`, { method: 'GET' });
+  console.log('positions: ', res);
+}
+
 const sendToHive = () => {
-  console.log('sendToHive');
+  console.log('sendToHive...');
 }
 
 const checkIfAtProfilePage = () => {
@@ -57,11 +72,9 @@ const checkIfAtProfilePage = () => {
           (response: { isOnProfilePage?: boolean }) => {
             if (response?.isOnProfilePage) {
               isOnProfilePage.value = true;
-              console.log('on profile page')
             }
           }
       );
-     
     }
   });
 }
@@ -82,7 +95,7 @@ const checkIfAtProfilePage = () => {
           </div>
         </div>
         <div style="margin-top: 16px; text-align: center;">
-          Go to user profile page
+          Searching for user profile...
         </div>
       </div>
     </div>
@@ -92,9 +105,27 @@ const checkIfAtProfilePage = () => {
       <div>
         <div class="text-lg font-semibold mb-4">Name</div>
         <input
-          v-model="userName"
+          v-model="name"
           type="text"
           class="input input-primary"
+        />
+      </div>
+      <br />
+      <div>
+        <div class="text-lg font-semibold mb-4">Email</div>
+        <input
+            v-model="email"
+            type="text"
+            class="input input-primary"
+        />
+      </div>
+      <br />
+      <div>
+        <div class="text-lg font-semibold mb-4">Designation</div>
+        <input
+            v-model="designation"
+            type="text"
+            class="input input-primary"
         />
       </div>
       <br />
@@ -134,6 +165,7 @@ const checkIfAtProfilePage = () => {
 .container {
   width: 100%;
   height: 100%;
+  padding: 10px;
 }
 
 .bee {
