@@ -34,10 +34,13 @@ onMounted(async () => {
     }
   });
 
-  getName();
-  getDesignation();
-  getExperiences();
-  checkIfAtProfilePage();
+  setTimeout(() => {
+    getName();
+    getDesignation();
+    getExperiences();
+    checkIfAtProfilePage();
+  }, 1000)
+  
   
   await getPosition();
 })
@@ -305,4 +308,7 @@ const checkIfAtProfilePage = () => {
   }
 }
 
+textarea {
+  height: 150px;
+}
 </style>

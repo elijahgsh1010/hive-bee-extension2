@@ -8,20 +8,23 @@ const userName = ref('');
 const url = import.meta.env.VITE_BASE_URL;
 
 onMounted(async () => {
-  
+
   chrome.storage.local.get('showPanel', async function (result) {
     if(result.showPanel){
       isShowPanel.value = true;
     }
   })
 
-  chrome.storage.local.get('hiveAccessToken', async function (result) {
-    if(result.hiveAccessToken){
-      isLoggedIn.value = true;
-      var res = await $api(`/api/userApp/get-user-basic-info`, { method: 'GET' });
-      userName.value = res.username;
-    }
+  chrome.storage.local.get(['hiveAccessToken'], function(result) {
+    localStorage.setItem('hiveAccessToken', result.hiveAccessToken);
   });
+  
+  if(localStorage.getItem('hiveAccessToken')){
+    isLoggedIn.value = true;
+  }
+
+  let res = await $api(`/api/userApp/get-user-basic-info`, { method: 'GET' });
+  userName.value = res.username;
   
 })
 

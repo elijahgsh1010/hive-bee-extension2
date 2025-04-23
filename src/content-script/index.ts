@@ -6,6 +6,8 @@ import { useBrowserLocalStorage } from "../composables/useBrowserStorage"
 let isIframeVisible = false;
 
 function onUrlChange(newUrl: string) {
+  console.log("onUrlChange", newUrl);
+  
   const isOnProfilePage = document.getElementById("profile-content") !== null;
 
   chrome.runtime.sendMessage({
@@ -159,8 +161,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     let isOnProfilePage = document.getElementById('profile-content') !== null;
     sendResponse({ isOnProfilePage: isOnProfilePage });
   }
+
+  if (message.type === "URL_CHANGED") {
+    onUrlChange(window.location.href);
+  }
+  
   return false;
 });
 
-
-injectIframe();
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => {
+    injectIframe();
+  });
+} else {
+  injectIframe();
+}

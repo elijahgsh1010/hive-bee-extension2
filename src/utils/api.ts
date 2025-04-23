@@ -10,13 +10,13 @@ const router = useRouter()
 export const $api = ofetch.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
     async onRequest({ options }) {
-        chrome.storage.local.get('hiveAccessToken', function (result) {
-            if(result.hiveAccessToken){
-                options.headers = {
-                    Authorization: `Bearer ${result.hiveAccessToken}`,
-                }
+        const accessToken = localStorage.getItem('hiveAccessToken');
+        if (accessToken) {
+            options.headers = {
+                ...options.headers,
+                Authorization: `Bearer ${accessToken}`,
             }
-        });
+        }
     },
 
     async onResponseError({ request, response, options }) {

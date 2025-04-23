@@ -26,6 +26,7 @@ chrome.runtime.onInstalled.addListener(async (opt) => {
   }
 })
 
+
 self.onerror = function (message, source, lineno, colno, error) {
   console.info("Error: " + message)
   console.info("Source: " + source)
