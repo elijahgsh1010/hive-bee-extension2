@@ -2,6 +2,16 @@
 // import { extPay } from 'src/utils/payment/extPay'
 // extPay.startBackground()
 
+type tabMap = { 
+    [url: string]: tabInfo;
+};
+type tabInfo = {
+    mainTabId: number;
+    experienceTabId: number;
+};
+
+const tabRequests: tabMap = {};
+
 chrome.runtime.onInstalled.addListener(async (opt) => {
   // Check if reason is install or update. Eg: opt.reason === 'install' // If extension is installed.
   // opt.reason === 'update' // If extension is updated.
@@ -26,6 +36,65 @@ chrome.runtime.onInstalled.addListener(async (opt) => {
   }
 })
 
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === 'SCRAPE_LINKEDIN_EXPERIENCE') {
+        openAndScrapeLinkedInExperience(message.url, sender?.tab?.id || 0);
+        return;
+    }
+
+    const res = tabRequests[message.url];
+    
+    if (message.type === 'LINKEDIN_EXPERIENCE_RESULT') {
+
+        if (res) {
+            chrome.tabs.sendMessage(res.mainTabId, { type: 'LINKEDIN_EXPERIENCE_RESULT', data: message.data });
+
+            delete tabRequests[message.url];
+        }
+    }
+
+    if (message.type === 'LINKEDIN_EDUCATION_RESULT') {
+
+        if (res) {
+            chrome.tabs.sendMessage(res.mainTabId, { type: 'LINKEDIN_EDUCATION_RESULT', data: message.data });
+
+            delete tabRequests[message.url];
+        }
+    }
+
+    // Optionally close the background tab
+    setTimeout(() => {
+        chrome.tabs.remove(res.experienceTabId);
+    }, 15000);
+
+    return false;
+});
+
+// open tab in background and rely on content script to scrape & respond
+function openAndScrapeLinkedInExperience(url: string, mainTabId: number) {
+    chrome.tabs.create(
+        {
+            url,
+            active: false, 
+        },
+        (tab) => {
+            if (!tab.id) {
+                return;
+            }
+
+            const tabId = tab.id;
+
+            tabRequests[url] = {
+                mainTabId: mainTabId,
+                experienceTabId: tabId
+            };
+
+            setTimeout(() => {
+                chrome.tabs.remove(tabId);
+            }, 15000); 
+        },
+    );
+}
 
 self.onerror = function (message, source, lineno, colno, error) {
   console.info("Error: " + message)

@@ -12,53 +12,70 @@ const experiences = ref('');
 const education = ref('');
 const isOnProfilePage = ref(false);
 const route = useRoute();
+const isLoading = ref(false);
+
 
 onMounted(async () => {
-  console.log('onMounted');
+  console.log('onMounted panel..');
 
-  window.addEventListener("message", (event) => {
-    if (event.data.type === "NAME_RESULT") {
-      name.value =  event.data.element;
-    }
-
-    if (event.data.type === "DESIGNATION_RESULT") {
-      designation.value =  event.data.element;
+  window.addEventListener("message", async (event) => {
+    console.log("component Panel got message:", event.data); 
+    
+    if(event.data.type === "SET_NAME") {  
+      name.value = event.data.name;
     }
     
-    if(event.data.type === "EXPERIENCE_RESULT") {
-      experiences.value = event.data.element;
+    if(event.data.type === "SET_DESIGNATION") {
+      designation.value = event.data.designation;
+    }
+    
+    if(event.data.type === "SET_EXPERIENCES") {
+      let experienceText = event.data.experience
+          .map((e: any) => `${e.title}\n${e.company}\n${e.period}`)
+          .join("\n\n"); 
+      experiences.value = experienceText;
+    }
+    
+    if(event.data.type === "SET_EDUCATION") {
+      let educationText = event.data.education
+          .map((e: any) => `${e.school}\n${e.degree}\n${e.years}`)
+          .join("\n\n");
+      education.value = educationText;
+    }
+
+    if(event.data.type === "PROFILE_RESULT") {
+      isLoading.value = true;
+      name.value =  event.data.result.name;
+      designation.value =  event.data.result.designation;
+      experiences.value = await $api(`/api/candidateApp/format-content`, { method: 'POST', body: {content: event.data.result.experience } });
+      education.value = await $api(`/api/candidateApp/format-content`, { method: 'POST', body: {content: event.data.result.education } });
+      notes.value = await $api(`/api/candidateApp/format-content`, { method: 'POST', body: {content: event.data.result.notes } });;
+      isLoading.value = false;
+    }
+
+    if(event.data.type === "CONTACT_INFO_RESULT") {
+      isLoading.value = true;
+      email.value =  event.data.result.email;
+      isLoading.value = false;
     }
 
     if(event.data.type === "SET_PAGE") {
+      console.log('SET_PAGE');
       isOnProfilePage.value = event.data.isOnProfilePage;
     }
+
+    if(event.data.type === "INIT") {
+      setTimeout(() => checkIfAtProfilePage(), 1000);
+    }
+    
   });
 
-  setTimeout(() => {
-    getName();
-    getDesignation();
-    getExperiences();
-    checkIfAtProfilePage();
-  }, 1000)
+  checkIfAtProfilePage();
   
-  
-  await getPosition();
 })
 
-const getName = () => {
-  window.parent.postMessage({ type: "GET_LINKEDIN_NAME", selector: ".artdeco-hoverable-trigger" }, "*");
-}
-
-const getExperiences = () => {
-  window.parent.postMessage({ type: "GET_LINKEDIN_EXPERIENCE", selector: ".artdeco-card.pv-profile-card" }, "*");
-}
-
-const getDesignation = () => {
-  window.parent.postMessage({ type: "GET_LINKEDIN_DESIGNATION", selector: "" }, "*");
-}
-
 const getPosition = async () => {
-  var res = await $api(`/api/position/get-all-position`, { method: 'GET' });
+  let res = await $api(`/api/position/get-all-position`, { method: 'GET' });
   console.log('positions: ', res);
 }
 
@@ -75,6 +92,8 @@ const checkIfAtProfilePage = () => {
           (response: { isOnProfilePage?: boolean }) => {
             if (response?.isOnProfilePage) {
               isOnProfilePage.value = true;
+              window.parent.postMessage({ type: "GET_LINKEDIN_USER_PROFILE" }, "*");
+              window.parent.postMessage({ type: "GET_LINKEDIN_CONTACT_INFO" }, "*");
             }
           }
       );
@@ -85,7 +104,7 @@ const checkIfAtProfilePage = () => {
 </script>
 
 <template>
-  <div class="container" v-if="!isOnProfilePage">
+  <div class="container" v-if="!isOnProfilePage && !isLoading">
     <div class="flex justify-center">
       <div id="loading" style="align-items: center; justify-content: center; display: flex; flex-direction: column; height: 450px;">
         <div class="bee">
@@ -142,11 +161,20 @@ const checkIfAtProfilePage = () => {
       </div>
       <br />
       <div>
+        <div class="text-lg font-semibold mb-4">Education</div>
+        <textarea
+          v-model="education"
+          rows="5"
+          class="input input-primary"
+        />
+      </div>
+      <br />
+      <div>
         <div class="text-lg font-semibold mb-4">Notes</div>
         <textarea
-            v-model="notes"
-            rows="5"
-            class="input input-primary"
+          v-model="notes"
+          rows="5"
+          class="input input-primary"
         />
       </div>
       <br />
@@ -310,5 +338,10 @@ const checkIfAtProfilePage = () => {
 
 textarea {
   height: 150px;
+  width: 100% !important;
+}
+
+input {
+  width: 100% !important;
 }
 </style>

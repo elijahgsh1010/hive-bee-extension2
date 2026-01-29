@@ -16,7 +16,9 @@ onMounted(async () => {
   })
 
   chrome.storage.local.get(['hiveAccessToken'], function(result) {
-    localStorage.setItem('hiveAccessToken', result.hiveAccessToken);
+    if(result.hiveAccessToken){
+      localStorage.setItem('hiveAccessToken', result.hiveAccessToken);
+    }
   });
   
   if(localStorage.getItem('hiveAccessToken')){
@@ -54,8 +56,8 @@ const hidePanel = () => {
       <div class="hero-content text-center">
         <div class="max-w-md">
           <div>
-            <h1>Hello</h1>
-            <p> {{ userName }} </p>
+            <h1 class="hello-text">Hello  <i-ph-smiley class="icon" /></h1>
+            <p class="username-text"> {{ userName }} </p>
           </div>
           
           <a
@@ -64,14 +66,12 @@ const hidePanel = () => {
             v-if="!isLoggedIn"
             target="_blank"
           >
-          <i-ph-rocket-launch />
+            <i-ph-rocket-launch />
             Login Now
           </a>
 
-          <br />
-
           <div class="max-w-md mt-4">
-            <button class="btn btn-primary btn-lg" @click="showPanel" v-if="!isShowPanel">
+            <button class="btn btn-primary btn-lg" @click="showPanel" v-if="!isShowPanel && isLoggedIn">
               Show Profile Panel
             </button>
 
@@ -82,4 +82,23 @@ const hidePanel = () => {
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+
+.hello-text {
+  margin: 0;
+  display: flex; 
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.icon {
+  width: 24px;  
+  height: 24px;
+}
+
+.username-text {
+  margin-top: 10px;
+}
+
+</style>
