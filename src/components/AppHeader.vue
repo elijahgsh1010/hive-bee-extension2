@@ -11,6 +11,7 @@
           src="@assets/logo.png"
           alt="logo"
           class="h-8 w-auto"
+          @click="console.log('logo clicked!')"
         />
         <div class="text-base font-semibold"> Hive</div>
       </RouterLink>

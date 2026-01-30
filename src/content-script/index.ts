@@ -5,17 +5,55 @@ import { useBrowserLocalStorage } from "../composables/useBrowserStorage"
 
 let isIframeVisible = false;
 var hasOpenedExperienceTab = false;
+let currentPage = window.location.href;
+
+function checkIfOnProfilePage() {
+    const url = new URL(window.location.href);
+    const path = url.pathname.replace(/\/+$/, "");
+    const segments = path.split("/").filter(Boolean);
+
+    const isOnProfilePage =
+        url.hostname === "www.linkedin.com" &&
+        segments.length === 2 &&
+        segments[0] === "in";
+    
+    return isOnProfilePage;
+}
+
+function getExperienceUrl() {
+    const url = new URL(window.location.href);
+    const path = url.pathname.replace(/\/+$/, "");
+    const segments = path.split("/").filter(Boolean);
+    const basePath = segments.slice(0, 3).join("/");
+    return `${url.origin}/${basePath}/details/experience/`;
+}
+
+function getEducationUrl() {
+    const url = new URL(window.location.href);
+    const path = url.pathname.replace(/\/+$/, "");
+    const segments = path.split("/").filter(Boolean);
+    const basePath = segments.slice(0, 3).join("/");
+    return `${url.origin}/${basePath}/details/education/`;
+}
+
+function postMessageToIframe(type: string, data: any = {}) {
+    const iframe = document.querySelector<HTMLIFrameElement>("#draggable-container iframe");
+    if (!iframe?.contentWindow) return;
+    iframe.contentWindow.postMessage(
+        {
+            type: type,
+            data: data,
+        },
+        "*",
+    );
+}
 
 function onUrlChange(newUrl: string) {
   console.log("onUrlChange", newUrl);
   
-  const isOnProfilePage = document.getElementById("profile-content") !== null;
+  const isOnProfilePage = checkIfOnProfilePage();
 
-  chrome.runtime.sendMessage({
-    type: "URL_CHANGED",
-    url: newUrl,
-    isOnProfilePage: isOnProfilePage,
-  });
+  window.postMessage({ type: "URL_CHANGED", data: isOnProfilePage }, "*");
 }
 
 function injectIframe() {
@@ -81,6 +119,7 @@ function injectIframe() {
       const designationElement = document?.querySelectorAll('.text-body-medium')
       let designation = designationElement[0]?.textContent || null
 
+      console.log("GET_LINKEDIN_USER_PROFILE..", name, designation, nameLink, designationElement);
       event.source!.postMessage({ type: "SET_NAME", name: name?.trimStart().trimEnd() }, { targetOrigin: event.origin });
       event.source!.postMessage({ type: "SET_DESIGNATION", designation: designation?.trimStart().trimEnd() }, { targetOrigin: event.origin });
     }
@@ -99,37 +138,22 @@ function injectIframe() {
     }
 
     if (event.data.type === "URL_CHANGED") {
-      event.source!.postMessage({ type: "SET_PAGE", isOnProfilePage: event.data.isOnProfilePage }, { targetOrigin: event.origin });
+      console.log(" send event URL_CHANGED..", event);
+      postMessageToIframe("SET_PAGE", event.data.data);
     }
     
     if(event.data.type === "SET_LINKEDIN_EXPERIENCE_RESULT") {
         console.log("SET_LINKEDIN_EXPERIENCE_RESULT..", event);
-        const iframe = document.querySelector<HTMLIFrameElement>("#draggable-container iframe");
-
-        if (!iframe?.contentWindow) return;
-        iframe.contentWindow.postMessage(
-            {
-                type: "SET_EXPERIENCES",
-                experience: event.data.data,
-            },
-            "*",
-        );
-        event.source!.postMessage({ type: "SET_EXPERIENCES", experience: event.data.data }, { targetOrigin: event.origin });
+        postMessageToIframe("SET_EXPERIENCES", event.data.data);
     }
     
     if(event.data.type === "SET_LINKEDIN_EDUCATION_RESULT") {
-        const iframe = document.querySelector<HTMLIFrameElement>("#draggable-container iframe");
-        if (!iframe?.contentWindow) return;
-        iframe.contentWindow.postMessage(
-            {
-                type: "SET_EDUCATION",
-                education: event.data.data,
-            },
-            "*",
-        );
-        event.source!.postMessage({ type: "SET_EDUCATION", education: event.data.data }, { targetOrigin: event.origin });
+        postMessageToIframe("SET_EDUCATION", event.data.data);
     }
-    
+
+    if(event.data.type === "SET_LINKEDIN_PROFILE_RESULT") {
+        postMessageToIframe("SET_NAME", event.data.data);
+    }
 
   });
   
@@ -190,40 +214,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === "LINKEDIN_EDUCATION_RESULT") {
         window.postMessage({ type: "SET_LINKEDIN_EDUCATION_RESULT", data: message.data }, "*");
     }
+
+    if (message.type === "LINKEDIN_PROFILE_RESULT") {
+        window.postMessage({ type: "SET_LINKEDIN_PROFILE_RESULT", data: message.data }, "*");
+    }
+
     return false;
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "CHECK_IF_ON_PROFILE_PAGE") {
-    const url = new URL(window.location.href);
-    const path = url.pathname.replace(/\/+$/, ""); 
-    const segments = path.split("/").filter(Boolean); 
-
-    const isOnProfilePage =
-      url.hostname === "www.linkedin.com" &&
-      segments.length === 2 &&
-      segments[0] === "in";
     
-    if(isOnProfilePage && !hasOpenedExperienceTab) {
+    let isProfilePage = checkIfOnProfilePage()
+    if(isProfilePage && !hasOpenedExperienceTab) {
         hasOpenedExperienceTab = true;
+        const experienceUrl= getExperienceUrl();
+        const educationUrl = getEducationUrl();
 
-        const basePath = segments.slice(0, 3).join("/"); 
-        const experiencePage = `${url.origin}/${basePath}/details/experience/`;
-        const educationPage = `${url.origin}/${basePath}/details/education/`;
+        chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: experienceUrl });
 
-        chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: experiencePage });
+        chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: educationUrl });
 
-        chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: educationPage });
+        chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: window.location.href });
     }
     
-    sendResponse({ isOnProfilePage: isOnProfilePage });
+    sendResponse({ isOnProfilePage: isProfilePage });
   }
 
-  if (message.type === "URL_CHANGED") {
-    console.log(" chrome runtime URL_CHANGED..");
-    onUrlChange(window.location.href);
-  }
-  
   return false;
 });
 
@@ -296,18 +313,30 @@ onReady(() => {
     let experiences: any[] = [];
     if (location.pathname.includes('/details/experience/')) {
         setTimeout(() => {
-            console.log('Detected LinkedIn Experience page!', experiences);
             chrome.runtime.sendMessage({type: 'LINKEDIN_EXPERIENCE_RESULT', url: location.href, data: getExperienceItems() });
             hasOpenedExperienceTab = false;
-        },3000);
+        },2000);
     }
 
     if (location.pathname.includes('/details/education/')) {
         setTimeout(() => {
-            console.log('Detected LinkedIn Education page!');
             chrome.runtime.sendMessage({type: 'LINKEDIN_EDUCATION_RESULT', url: location.href, data: getEducationItems() });
             hasOpenedExperienceTab = false;
-        },3000);
+        },2000);
     }
+    
+    if(checkIfOnProfilePage()) {
+        setTimeout(() => {
+            const nameLink = document.querySelector<HTMLAnchorElement>('a[href*="/overlay/about-this-profile/"]');
+            const name = nameLink?.getAttribute("aria-label") ?? null;
+            console.log("**name..**", name);
+            const designationElement = document?.querySelectorAll('.text-body-medium')
+            let designation = designationElement[0]?.textContent || null
+
+            chrome.runtime.sendMessage({type: 'LINKEDIN_PROFILE_RESULT', url: location.href, data: { name, designation } });
+            hasOpenedExperienceTab = false;
+        }, 2000);
+    }
+    
     
 });

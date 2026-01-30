@@ -13,7 +13,7 @@ const education = ref('');
 const isOnProfilePage = ref(false);
 const route = useRoute();
 const isLoading = ref(false);
-
+const pollingInterval = ref<ReturnType<typeof setInterval> | null>(null);
 
 onMounted(async () => {
   console.log('onMounted panel..');
@@ -22,7 +22,8 @@ onMounted(async () => {
     console.log("component Panel got message:", event.data); 
     
     if(event.data.type === "SET_NAME") {  
-      name.value = event.data.name;
+      name.value = event.data.data.name;
+      designation.value = event.data.data.designation;
     }
     
     if(event.data.type === "SET_DESIGNATION") {
@@ -30,17 +31,11 @@ onMounted(async () => {
     }
     
     if(event.data.type === "SET_EXPERIENCES") {
-      let experienceText = event.data.experience
-          .map((e: any) => `${e.title}\n${e.company}\n${e.period}`)
-          .join("\n\n"); 
-      experiences.value = experienceText;
+      experiences.value = event.data.data.map((e: any) => `${e.title}\n${e.company}\n${e.period}`).join("\n\n");
     }
     
     if(event.data.type === "SET_EDUCATION") {
-      let educationText = event.data.education
-          .map((e: any) => `${e.school}\n${e.degree}\n${e.years}`)
-          .join("\n\n");
-      education.value = educationText;
+      education.value = event.data.data.map((e: any) => `${e.school}\n${e.degree}\n${e.years}`).join("\n\n");
     }
 
     if(event.data.type === "PROFILE_RESULT") {
@@ -54,14 +49,11 @@ onMounted(async () => {
     }
 
     if(event.data.type === "CONTACT_INFO_RESULT") {
-      isLoading.value = true;
       email.value =  event.data.result.email;
-      isLoading.value = false;
     }
 
     if(event.data.type === "SET_PAGE") {
-      console.log('SET_PAGE');
-      isOnProfilePage.value = event.data.isOnProfilePage;
+      isOnProfilePage.value = event.data.data;
     }
 
     if(event.data.type === "INIT") {
@@ -71,7 +63,6 @@ onMounted(async () => {
   });
 
   checkIfAtProfilePage();
-  
 })
 
 const getPosition = async () => {
@@ -81,6 +72,7 @@ const getPosition = async () => {
 
 const sendToHive = () => {
   console.log('sendToHive...');
+  console.log('**data** ', name.value, experiences.value, education.value, notes.value, designation.value, email.value);
 }
 
 const checkIfAtProfilePage = () => {
@@ -91,6 +83,7 @@ const checkIfAtProfilePage = () => {
           { type: "CHECK_IF_ON_PROFILE_PAGE" },
           (response: { isOnProfilePage?: boolean }) => {
             if (response?.isOnProfilePage) {
+              clearPolling();
               isOnProfilePage.value = true;
               window.parent.postMessage({ type: "GET_LINKEDIN_USER_PROFILE" }, "*");
               window.parent.postMessage({ type: "GET_LINKEDIN_CONTACT_INFO" }, "*");
@@ -99,6 +92,23 @@ const checkIfAtProfilePage = () => {
       );
     }
   });
+}
+
+const setupPolling = () => {
+  pollingInterval.value = setInterval(() => {
+    checkIfAtProfilePage();
+  }, 1000); 
+}
+
+const clearPolling = () => {
+  if (pollingInterval.value !== null) {
+    clearInterval(pollingInterval.value);
+    pollingInterval.value = null;
+  }
+};
+
+const refresh = () => {
+  checkIfAtProfilePage();
 }
 
 </script>
@@ -117,7 +127,10 @@ const checkIfAtProfilePage = () => {
           </div>
         </div>
         <div style="margin-top: 16px; text-align: center;">
-          Searching for user profile...
+          <span>Searching for user profile...</span><br/><br/>
+          <button class="btn btn-primary btn-md" @click="refresh()">
+            Refresh
+          </button>
         </div>
       </div>
     </div>
@@ -185,6 +198,14 @@ const checkIfAtProfilePage = () => {
         >
           <i-ph-rocket-launch />
           Send to Hive
+        </button>
+
+        <button
+            class="btn btn-primary"
+            @click="checkIfAtProfilePage()"
+        >
+          <i-ph-rocket-launch />
+          Harvest
         </button>
       </div>
     </div>

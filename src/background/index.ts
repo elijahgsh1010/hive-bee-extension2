@@ -45,26 +45,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const res = tabRequests[message.url];
     
     if (message.type === 'LINKEDIN_EXPERIENCE_RESULT') {
-
         if (res) {
             chrome.tabs.sendMessage(res.mainTabId, { type: 'LINKEDIN_EXPERIENCE_RESULT', data: message.data });
-
-            delete tabRequests[message.url];
         }
     }
 
     if (message.type === 'LINKEDIN_EDUCATION_RESULT') {
-
         if (res) {
             chrome.tabs.sendMessage(res.mainTabId, { type: 'LINKEDIN_EDUCATION_RESULT', data: message.data });
-
-            delete tabRequests[message.url];
         }
     }
 
+    if (message.type === 'LINKEDIN_PROFILE_RESULT') {
+        if (res) {
+            chrome.tabs.sendMessage(res.mainTabId, { type: 'LINKEDIN_PROFILE_RESULT', data: message.data });
+        }
+    }
+    
+    delete tabRequests[message.url];
+    chrome.tabs.remove(res?.experienceTabId);
+
     // Optionally close the background tab
     setTimeout(() => {
-        chrome.tabs.remove(res.experienceTabId);
+        chrome.tabs.remove(res?.experienceTabId);
     }, 15000);
 
     return false;
@@ -88,10 +91,7 @@ function openAndScrapeLinkedInExperience(url: string, mainTabId: number) {
                 mainTabId: mainTabId,
                 experienceTabId: tabId
             };
-
-            setTimeout(() => {
-                chrome.tabs.remove(tabId);
-            }, 15000); 
+            setTimeout(() => {chrome.tabs.remove(tabId); }, 15000); 
         },
     );
 }
