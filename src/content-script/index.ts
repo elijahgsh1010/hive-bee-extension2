@@ -6,6 +6,8 @@ import { useBrowserLocalStorage } from "../composables/useBrowserStorage"
 let isIframeVisible = false;
 var hasOpenedExperienceTab = false;
 let currentPage = window.location.href;
+let hasOpenedHiveTab = false;
+const loginUrl = import.meta.env.VITE_BASE_URL;
 
 function checkIfOnProfilePage() {
     const url = new URL(window.location.href);
@@ -36,6 +38,12 @@ function getEducationUrl() {
     return `${url.origin}/${basePath}/details/education/`;
 }
 
+function getContactUrl() {
+    const url = new URL(window.location.href);
+    const base = url.href.replace(/\/+$/, "");
+    return `${base}/overlay/contact-info/`;
+}
+
 function postMessageToIframe(type: string, data: any = {}) {
     const iframe = document.querySelector<HTMLIFrameElement>("#draggable-container iframe");
     if (!iframe?.contentWindow) return;
@@ -63,9 +71,11 @@ function injectIframe() {
   const container = document.createElement("div");
   container.setAttribute("id", "draggable-container");
   container.className = "draggable-container";
-
+  container.style.top = "20px";
+  container.style.right = "20px";
+  container.style.left = "auto";
+    
   chrome.storage.local.get('showPanel', function (result) {
-    console.log('Value currently is ' + result.showPanel);
     if(!result.showPanel){
       container.style.display = "none"
     }
@@ -74,7 +84,7 @@ function injectIframe() {
   const header = document.createElement("div");
   header.className = "iframe-header";
   header.innerHTML = `
-    <span>${name}</span>
+    <span></span>
     <button id="minimize-btn">X</button>
   `;
     
@@ -111,23 +121,7 @@ function injectIframe() {
   });
 
   window.addEventListener("message", (event) => {
-    if(event.data.type === "GET_LINKEDIN_USER_PROFILE") {
     
-      const nameLink = document.querySelector<HTMLAnchorElement>('a[href*="/overlay/about-this-profile/"]');
-      const name = nameLink?.getAttribute("aria-label") ?? null;
-
-      const designationElement = document?.querySelectorAll('.text-body-medium')
-      let designation = designationElement[0]?.textContent || null
-
-      console.log("GET_LINKEDIN_USER_PROFILE..", name, designation, nameLink, designationElement);
-      event.source!.postMessage({ type: "SET_NAME", name: name?.trimStart().trimEnd() }, { targetOrigin: event.origin });
-      event.source!.postMessage({ type: "SET_DESIGNATION", designation: designation?.trimStart().trimEnd() }, { targetOrigin: event.origin });
-    }
-    
-    if(event.data.type === "GET_LINKEDIN_CONTACT_INFO") {
-      
-    }
-
     if (event.data.type === "SHOW_PANEL") {
       container.style.display = "block";
       event.source!.postMessage({ type: "INIT" }, { targetOrigin: event.origin });
@@ -138,21 +132,28 @@ function injectIframe() {
     }
 
     if (event.data.type === "URL_CHANGED") {
-      console.log(" send event URL_CHANGED..", event);
       postMessageToIframe("SET_PAGE", event.data.data);
     }
     
     if(event.data.type === "SET_LINKEDIN_EXPERIENCE_RESULT") {
-        console.log("SET_LINKEDIN_EXPERIENCE_RESULT..", event);
-        postMessageToIframe("SET_EXPERIENCES", event.data.data);
+      console.log("SET_LINKEDIN_EXPERIENCE_RESULT..", event);
+      postMessageToIframe("SET_EXPERIENCES", event.data.data);
     }
     
     if(event.data.type === "SET_LINKEDIN_EDUCATION_RESULT") {
-        postMessageToIframe("SET_EDUCATION", event.data.data);
+      postMessageToIframe("SET_EDUCATION", event.data.data);
     }
 
     if(event.data.type === "SET_LINKEDIN_PROFILE_RESULT") {
-        postMessageToIframe("SET_NAME", event.data.data);
+      postMessageToIframe("SET_NAME", event.data.data);
+    }
+
+    if(event.data.type === "SET_LINKEDIN_CONTACT_RESULT") {
+      postMessageToIframe("SET_CONTACT", event.data.data);
+    }
+
+    if(event.data.type === "LOGGED_IN") {
+      postMessageToIframe("SET_LOGIN");
     }
 
   });
@@ -168,13 +169,6 @@ function injectIframe() {
     isIframeVisible = false;
     chrome.storage.local.set({showPanel: false});
   });
-
-  if(window.location.href.includes("hive.hrnetgroup.com") || window.location.href.includes("localhost")) {
-    const token = localStorage.getItem('accessToken');
-    if(token) {
-      chrome.storage.local.set({hiveAccessToken: token});
-    }
-  }
 
   console.info("Draggable, minimizable iframe injected!");
 }
@@ -206,7 +200,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("background message received..", message);
     if (message.type === "LINKEDIN_EXPERIENCE_RESULT") {
         window.postMessage({ type: "SET_LINKEDIN_EXPERIENCE_RESULT", data: message.data }, "*");
     }
@@ -219,10 +212,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         window.postMessage({ type: "SET_LINKEDIN_PROFILE_RESULT", data: message.data }, "*");
     }
 
+    if (message.type === "LINKEDIN_CONTACT_RESULT") {
+        window.postMessage({ type: "SET_LINKEDIN_CONTACT_RESULT", data: message.data }, "*");
+    }
+
+    if (message.type === "LOGGED_IN") {
+        console.log("chrome.runtime.onMessage.addListener", message);
+        window.postMessage({ type: "LOGGED_IN", data: message.data }, "*");
+    }
+
     return false;
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log("background message received..", message);
   if (message.type === "CHECK_IF_ON_PROFILE_PAGE") {
     
     let isProfilePage = checkIfOnProfilePage()
@@ -230,17 +233,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         hasOpenedExperienceTab = true;
         const experienceUrl= getExperienceUrl();
         const educationUrl = getEducationUrl();
+        const contactInfoUrl = getContactUrl();
 
-        chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: experienceUrl });
-
-        chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: educationUrl });
-
-        chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: window.location.href });
+        // chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: experienceUrl });
+        // chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: educationUrl });
+        // chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: window.location.href });
+        chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: contactInfoUrl });
     }
     
     sendResponse({ isOnProfilePage: isProfilePage });
   }
 
+  if (message.type === "LOGIN") {
+    if(!hasOpenedHiveTab) {
+      hasOpenedHiveTab = true;
+      chrome.runtime.sendMessage({ type: 'LOGIN_TO_HIVE', url: loginUrl });
+    }
+  }
+    
   return false;
 });
 
@@ -309,8 +319,40 @@ function getEducationItems() {
     });
 }
 
+function getContactInfo(root: ParentNode = document) {
+    let phone: string | null = null;
+    let email: string | null = null;
+
+    // All "contact type" sections (Profile, Phone, Email, Birthday, Connected, ...)
+    const sections = root.querySelectorAll<HTMLElement>("section.pv-contact-info__contact-type");
+
+    sections.forEach(section => {
+        const headingText = section
+            .querySelector<HTMLElement>(".pv-contact-info__header")
+            ?.textContent
+            ?.trim() || "";
+
+        if (/phone/i.test(headingText)) {
+            // First dark phone span
+            const phoneSpan = section.querySelector<HTMLElement>(
+                "ul.list-style-none li span.t-14.t-black.t-normal"
+            );
+            phone = phoneSpan?.textContent?.trim() || null;
+        }
+
+        if (/email/i.test(headingText)) {
+            const emailLink = section.querySelector<HTMLAnchorElement>("a[href^='mailto:']");
+            const href = emailLink?.getAttribute("href") || "";
+            // Strip "mailto:" if present
+            email = href.replace(/^mailto:/i, "").trim() || null;
+        }
+    });
+
+    console.log('get linkedin contact info', { phone, email });
+    return { phone, email };
+}
+
 onReady(() => {
-    let experiences: any[] = [];
     if (location.pathname.includes('/details/experience/')) {
         setTimeout(() => {
             chrome.runtime.sendMessage({type: 'LINKEDIN_EXPERIENCE_RESULT', url: location.href, data: getExperienceItems() });
@@ -324,19 +366,33 @@ onReady(() => {
             hasOpenedExperienceTab = false;
         },2000);
     }
+
+    if(location.pathname.includes('/overlay/contact-info/')) {
+        setTimeout(() => {
+            chrome.runtime.sendMessage({type: 'LINKEDIN_CONTACT_RESULT', url: location.href, data: getContactInfo() });
+            hasOpenedExperienceTab = false;
+        },2000);
+    }
     
     if(checkIfOnProfilePage()) {
         setTimeout(() => {
             const nameLink = document.querySelector<HTMLAnchorElement>('a[href*="/overlay/about-this-profile/"]');
-            const name = nameLink?.getAttribute("aria-label") ?? null;
-            console.log("**name..**", name);
+            const name = nameLink?.getAttribute("aria-label") ?? "";
             const designationElement = document?.querySelectorAll('.text-body-medium')
-            let designation = designationElement[0]?.textContent || null
+            let designation = designationElement[0]?.textContent || ""
 
-            chrome.runtime.sendMessage({type: 'LINKEDIN_PROFILE_RESULT', url: location.href, data: { name, designation } });
+            chrome.runtime.sendMessage({type: 'LINKEDIN_PROFILE_RESULT', url: location.href, data: { name: name?.trimStart().trimEnd(), designation: designation.trimStart().trimEnd() } });
             hasOpenedExperienceTab = false;
         }, 2000);
     }
-    
+
+    if(window.location.href.includes("hive.hrnetgroup.com") || window.location.href.includes("localhost")) {
+      const token = localStorage.getItem('accessToken');
+      if(token) {
+        chrome.storage.local.set({hiveAccessToken: token});
+        chrome.runtime.sendMessage({type: 'LOGGED_IN', url: loginUrl } );
+      }
+      hasOpenedHiveTab = false;
+    }
     
 });

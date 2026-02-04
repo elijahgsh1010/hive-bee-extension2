@@ -8,6 +8,8 @@ const userName = ref('');
 const url = import.meta.env.VITE_BASE_URL;
 
 onMounted(async () => {
+  
+  console.log('action popup mounted');
 
   chrome.storage.local.get('showPanel', async function (result) {
     if(result.showPanel){
@@ -27,8 +29,18 @@ onMounted(async () => {
 
   let res = await $api(`/api/userApp/get-user-basic-info`, { method: 'GET' });
   userName.value = res.username;
-  
 })
+
+const login = () => {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs[0]?.id) {
+      chrome.tabs.sendMessage(
+          tabs[0].id,
+          { type: "LOGIN" }
+      );
+    }
+  });
+}
 
 const showPanel = () => {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -60,15 +72,15 @@ const hidePanel = () => {
             <p class="username-text"> {{ userName }} </p>
           </div>
           
-          <a
-            :href="url"
+          <button
             class="btn btn-secondary btn-lg"
             v-if="!isLoggedIn"
             target="_blank"
+            @click="login"
           >
             <i-ph-rocket-launch />
             Login Now
-          </a>
+          </button>
 
           <div class="max-w-md mt-4">
             <button class="btn btn-primary btn-lg" @click="showPanel" v-if="!isShowPanel && isLoggedIn">

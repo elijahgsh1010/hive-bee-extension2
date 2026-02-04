@@ -34,7 +34,7 @@ export default {
       all_frames: false,
       js: ["src/content-script/index.ts"],
       // matches: ["*://*/*"],
-      matches: ["https://dev.hive.hrnetgroup.com/*", "https://www.linkedin.com/*", "http://localhost:5050/*"],
+      matches: ["https://dev.hive.hrnetgroup.com/*", "https://www.linkedin.com/*", "http://localhost:5050/*", "https://hive.hrnetgroup.com/*"],
     },
   ],
   side_panel: {

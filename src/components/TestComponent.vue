@@ -6,6 +6,7 @@ const { increment, decrement } = testStore
 
 const name = ref('');
 const email = ref('');
+const phoneNumber = ref('');
 const designation = ref('');
 const notes = ref('');
 const experiences = ref('');
@@ -13,11 +14,19 @@ const education = ref('');
 const isOnProfilePage = ref(false);
 const route = useRoute();
 const isLoading = ref(false);
+const isLoggedIn = ref(true);
 const pollingInterval = ref<ReturnType<typeof setInterval> | null>(null);
 
 onMounted(async () => {
   console.log('onMounted panel..');
-
+  try {
+    let res = await $api(`/api/userApp/get-user-basic-info`, { method: 'GET' });
+    isLoggedIn.value = true;
+  } catch (error) {
+    console.log('error: ', error);
+    sendTabMessage("LOGIN", () => {});
+  }
+  
   window.addEventListener("message", async (event) => {
     console.log("component Panel got message:", event.data); 
     
@@ -26,8 +35,9 @@ onMounted(async () => {
       designation.value = event.data.data.designation;
     }
     
-    if(event.data.type === "SET_DESIGNATION") {
-      designation.value = event.data.designation;
+    if(event.data.type === "SET_CONTACT") {
+      email.value = event.data.data.email;
+      phoneNumber.value = event.data.data.phone;
     }
     
     if(event.data.type === "SET_EXPERIENCES") {
@@ -48,16 +58,22 @@ onMounted(async () => {
       isLoading.value = false;
     }
 
-    if(event.data.type === "CONTACT_INFO_RESULT") {
-      email.value =  event.data.result.email;
-    }
-
     if(event.data.type === "SET_PAGE") {
       isOnProfilePage.value = event.data.data;
     }
 
     if(event.data.type === "INIT") {
       setTimeout(() => checkIfAtProfilePage(), 1000);
+    }
+    
+    if(event.data.type === "SET_LOGIN") {
+      chrome.storage.local.get(['hiveAccessToken'], function(result) {
+        if(result.hiveAccessToken){
+          localStorage.setItem('hiveAccessToken', result.hiveAccessToken);
+          isLoggedIn.value = true;
+        }
+      });
+      checkIfAtProfilePage();
     }
     
   });
@@ -70,29 +86,48 @@ const getPosition = async () => {
   console.log('positions: ', res);
 }
 
-const sendToHive = () => {
+const sendToHive = async () => {
   console.log('sendToHive...');
   console.log('**data** ', name.value, experiences.value, education.value, notes.value, designation.value, email.value);
+  await getPosition();
+  let input = {
+    name: name.value,
+    experience: experiences.value,
+    education: education.value,
+    notes: notes.value,
+    designation: designation.value,
+    email: email.value,
+    phoneNumber: phoneNumber.value
+  };
+  await $api(`/api/candidateApp/create-candidate-from-linkedin`, { method: 'POST', body: input });
 }
 
-const checkIfAtProfilePage = () => {
+const sendTabMessage = <T = any>(
+    message: any,
+    callback?: (response: T) => void
+) => {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0]?.id) {
-      chrome.tabs.sendMessage(
-          tabs[0].id,
-          { type: "CHECK_IF_ON_PROFILE_PAGE" },
-          (response: { isOnProfilePage?: boolean }) => {
-            if (response?.isOnProfilePage) {
-              clearPolling();
-              isOnProfilePage.value = true;
-              window.parent.postMessage({ type: "GET_LINKEDIN_USER_PROFILE" }, "*");
-              window.parent.postMessage({ type: "GET_LINKEDIN_CONTACT_INFO" }, "*");
-            }
-          }
-      );
+      chrome.tabs.sendMessage(tabs[0].id, {type: message}, {}, callback);
     }
   });
-}
+};
+
+const checkIfAtProfilePage = () => {
+  if(isLoggedIn.value === false) {
+    return;
+  }
+
+  sendTabMessage(
+      "CHECK_IF_ON_PROFILE_PAGE",
+      (response: { isOnProfilePage?: boolean }) => {
+        if (response?.isOnProfilePage) {
+          clearPolling();
+          isOnProfilePage.value = true;
+        }
+      }
+  );
+};
 
 const setupPolling = () => {
   pollingInterval.value = setInterval(() => {
@@ -111,10 +146,24 @@ const refresh = () => {
   checkIfAtProfilePage();
 }
 
+const login = () => {
+  sendTabMessage("LOGIN", () => {});
+}
+
 </script>
 
 <template>
-  <div class="container" v-if="!isOnProfilePage && !isLoading">
+  <div class="text-center" v-if="!isLoggedIn">
+    <button
+        class="btn btn-secondary btn-lg"
+        target="_blank"
+        @click="login"
+    >
+      <i-ph-rocket-launch />
+      Login Now
+    </button>
+  </div>
+  <div class="container" v-if="!isOnProfilePage && !isLoading && isLoggedIn">
     <div class="flex justify-center">
       <div id="loading" style="align-items: center; justify-content: center; display: flex; flex-direction: column; height: 450px;">
         <div class="bee">
@@ -135,7 +184,7 @@ const refresh = () => {
       </div>
     </div>
   </div>
-  <div v-if="isOnProfilePage">
+  <div v-if="isOnProfilePage && isLoggedIn">
     <div class="text-left">
       <div>
         <div class="text-lg font-semibold mb-4">Name</div>
@@ -143,6 +192,15 @@ const refresh = () => {
           v-model="name"
           type="text"
           class="input input-primary"
+        />
+      </div>
+      <br />
+      <div>
+        <div class="text-lg font-semibold mb-4">Phone Number</div>
+        <input
+            v-model="phoneNumber"
+            type="text"
+            class="input input-primary"
         />
       </div>
       <br />
@@ -182,15 +240,15 @@ const refresh = () => {
         />
       </div>
       <br />
-      <div>
-        <div class="text-lg font-semibold mb-4">Notes</div>
-        <textarea
-          v-model="notes"
-          rows="5"
-          class="input input-primary"
-        />
-      </div>
-      <br />
+<!--      <div>-->
+<!--        <div class="text-lg font-semibold mb-4">Notes</div>-->
+<!--        <textarea-->
+<!--          v-model="notes"-->
+<!--          rows="5"-->
+<!--          class="input input-primary"-->
+<!--        />-->
+<!--      </div>-->
+<!--      <br />-->
       <div class="flex gap-2 justify-center">
         <button
           class="btn btn-primary"
@@ -201,10 +259,10 @@ const refresh = () => {
         </button>
 
         <button
-            class="btn btn-primary"
+            class="btn btn-success"
             @click="checkIfAtProfilePage()"
         >
-          <i-ph-rocket-launch />
+          <i-ph-plant />
           Harvest
         </button>
       </div>

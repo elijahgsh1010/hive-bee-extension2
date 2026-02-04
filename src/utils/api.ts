@@ -21,6 +21,7 @@ export const $api = ofetch.create({
 
     async onResponseError({ request, response, options }) {
         if(response.status == 401) {
+            throw new Error('Unauthorized');
             return;
         }
 

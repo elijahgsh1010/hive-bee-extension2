@@ -16,6 +16,7 @@ declare module 'vue' {
     IPhGear: typeof import('~icons/ph/gear')['default']
     IPhGlobe: typeof import('~icons/ph/globe')['default']
     IPhMoon: typeof import('~icons/ph/moon')['default']
+    IPhPlant: typeof import('~icons/ph/plant')['default']
     IPhQuestion: typeof import('~icons/ph/question')['default']
     IPhRocketLaunch: typeof import('~icons/ph/rocket-launch')['default']
     IPhSmiley: typeof import('~icons/ph/smiley')['default']

@@ -37,30 +37,23 @@ chrome.runtime.onInstalled.addListener(async (opt) => {
 })
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log("in background listener..", message, tabRequests);
+    
+    if (message.type === 'LOGIN_TO_HIVE') {
+        openTab(message.url, sender?.tab?.id || 0);
+        return;
+    }
+    
     if (message.type === 'SCRAPE_LINKEDIN_EXPERIENCE') {
-        openAndScrapeLinkedInExperience(message.url, sender?.tab?.id || 0);
+        openTab(message.url, sender?.tab?.id || 0);
         return;
     }
 
     const res = tabRequests[message.url];
     
-    if (message.type === 'LINKEDIN_EXPERIENCE_RESULT') {
-        if (res) {
-            chrome.tabs.sendMessage(res.mainTabId, { type: 'LINKEDIN_EXPERIENCE_RESULT', data: message.data });
-        }
-    }
-
-    if (message.type === 'LINKEDIN_EDUCATION_RESULT') {
-        if (res) {
-            chrome.tabs.sendMessage(res.mainTabId, { type: 'LINKEDIN_EDUCATION_RESULT', data: message.data });
-        }
-    }
-
-    if (message.type === 'LINKEDIN_PROFILE_RESULT') {
-        if (res) {
-            chrome.tabs.sendMessage(res.mainTabId, { type: 'LINKEDIN_PROFILE_RESULT', data: message.data });
-        }
-    }
+    if(!res) return;
+    
+    chrome.tabs.sendMessage(res.mainTabId, { type: message.type, data: message.data });
     
     delete tabRequests[message.url];
     chrome.tabs.remove(res?.experienceTabId);
@@ -74,7 +67,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 // open tab in background and rely on content script to scrape & respond
-function openAndScrapeLinkedInExperience(url: string, mainTabId: number) {
+function openTab(url: string, mainTabId: number) {
     chrome.tabs.create(
         {
             url,
@@ -91,7 +84,7 @@ function openAndScrapeLinkedInExperience(url: string, mainTabId: number) {
                 mainTabId: mainTabId,
                 experienceTabId: tabId
             };
-            setTimeout(() => {chrome.tabs.remove(tabId); }, 15000); 
+            setTimeout(() => {chrome.tabs.remove(tabId); }, 60000); 
         },
     );
 }
@@ -104,6 +97,6 @@ self.onerror = function (message, source, lineno, colno, error) {
   console.info("Error object: " + error)
 }
 
-console.info("hello world from background")
+console.info("hello world from background");
 
 export {}
