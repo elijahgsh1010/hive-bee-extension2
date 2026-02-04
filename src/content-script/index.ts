@@ -65,6 +65,9 @@ function onUrlChange(newUrl: string) {
 }
 
 function injectIframe() {
+  if(!window.location.href.includes("linkedin.com")) {
+      return;
+  }
     
   const src = chrome.runtime.getURL("src/ui/content-script-iframe/index.html");
 
@@ -85,7 +88,11 @@ function injectIframe() {
   header.className = "iframe-header";
   header.innerHTML = `
     <span></span>
-    <button id="minimize-btn">X</button>
+    <button id="minimize-btn">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 256 256" fill="currentColor">
+      <path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/>
+    </svg>
+  </button>
   `;
     
   const iframe = document.createElement("iframe");
@@ -136,7 +143,6 @@ function injectIframe() {
     }
     
     if(event.data.type === "SET_LINKEDIN_EXPERIENCE_RESULT") {
-      console.log("SET_LINKEDIN_EXPERIENCE_RESULT..", event);
       postMessageToIframe("SET_EXPERIENCES", event.data.data);
     }
     
@@ -225,30 +231,42 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log("background message received..", message);
   if (message.type === "CHECK_IF_ON_PROFILE_PAGE") {
+    let iframeContainer = document.getElementById("draggable-container");
+    if (iframeContainer?.style.display === "none") return;
     
     let isProfilePage = checkIfOnProfilePage()
     if(isProfilePage && !hasOpenedExperienceTab) {
-        hasOpenedExperienceTab = true;
-        const experienceUrl= getExperienceUrl();
-        const educationUrl = getEducationUrl();
-        const contactInfoUrl = getContactUrl();
+      hasOpenedExperienceTab = true;
+      const experienceUrl= getExperienceUrl();
+      const educationUrl = getEducationUrl();
+      const contactInfoUrl = getContactUrl();
 
-        // chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: experienceUrl });
-        // chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: educationUrl });
-        // chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: window.location.href });
-        chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: contactInfoUrl });
+      chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: experienceUrl });
+      chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: educationUrl });
+      chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: window.location.href });
+      chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: contactInfoUrl });
     }
     
     sendResponse({ isOnProfilePage: isProfilePage });
   }
 
-  if (message.type === "LOGIN") {
-    if(!hasOpenedHiveTab) {
-      hasOpenedHiveTab = true;
-      chrome.runtime.sendMessage({ type: 'LOGIN_TO_HIVE', url: loginUrl });
+  if (message.type === "HARVEST") {
+    let isProfilePage = checkIfOnProfilePage()
+    if(isProfilePage) {
+      const experienceUrl= getExperienceUrl();
+      const educationUrl = getEducationUrl();
+      const contactInfoUrl = getContactUrl();
+
+      chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: experienceUrl });
+      chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: educationUrl });
+      chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: window.location.href });
+      chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: contactInfoUrl });
     }
+  }
+
+  if (message.type === "LOGIN") {
+    chrome.runtime.sendMessage({ type: 'LOGIN_TO_HIVE', url: loginUrl });
   }
     
   return false;
@@ -281,9 +299,13 @@ function getExperienceItems() {
                 const title = roleLi.querySelector<HTMLElement>('.hoverable-link-text.t-bold span[aria-hidden="true"]')?.textContent?.trim() ?? '';
 
                 const period = roleLi.querySelector<HTMLElement>('.t-14.t-normal.t-black--light .pvs-entity__caption-wrapper[aria-hidden="true"]')?.textContent?.trim() ?? '';
+                const descriptionEl = roleLi.querySelector<HTMLElement>(
+                    '.pvs-entity__sub-components .t-14.t-normal.t-black span[aria-hidden="true"]'
+                );
+                const description = descriptionEl?.textContent?.trim() ?? '';
 
                 if (company || title || period) {
-                    result.push({ company, title, period });
+                    result.push({ company, title, period, description });
                 }
             });
         } else {
@@ -293,9 +315,14 @@ function getExperienceItems() {
             const company = li.querySelector<HTMLElement>('.t-14.t-normal span[aria-hidden="true"]')?.textContent?.trim() ?? '';
 
             const period = li.querySelector<HTMLElement>('.t-14.t-normal.t-black--light .pvs-entity__caption-wrapper[aria-hidden="true"]')?.textContent?.trim() ?? '';
+            // Extract roles & responsibilities from sub-components
+            const descriptionEl = li.querySelector<HTMLElement>(
+                '.pvs-entity__sub-components .t-14.t-normal.t-black span[aria-hidden="true"]'
+            );
+            const description = descriptionEl?.textContent?.trim() ?? '';
 
             if (company || title || period) {
-                result.push({ company, title, period });
+                result.push({ company, title, period, description });
             }
         }
     });
@@ -333,7 +360,6 @@ function getContactInfo(root: ParentNode = document) {
             ?.trim() || "";
 
         if (/phone/i.test(headingText)) {
-            // First dark phone span
             const phoneSpan = section.querySelector<HTMLElement>(
                 "ul.list-style-none li span.t-14.t-black.t-normal"
             );
@@ -343,12 +369,10 @@ function getContactInfo(root: ParentNode = document) {
         if (/email/i.test(headingText)) {
             const emailLink = section.querySelector<HTMLAnchorElement>("a[href^='mailto:']");
             const href = emailLink?.getAttribute("href") || "";
-            // Strip "mailto:" if present
             email = href.replace(/^mailto:/i, "").trim() || null;
         }
     });
 
-    console.log('get linkedin contact info', { phone, email });
     return { phone, email };
 }
 
@@ -392,7 +416,6 @@ onReady(() => {
         chrome.storage.local.set({hiveAccessToken: token});
         chrome.runtime.sendMessage({type: 'LOGGED_IN', url: loginUrl } );
       }
-      hasOpenedHiveTab = false;
     }
     
 });

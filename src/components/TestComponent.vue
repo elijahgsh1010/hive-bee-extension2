@@ -16,6 +16,10 @@ const route = useRoute();
 const isLoading = ref(false);
 const isLoggedIn = ref(true);
 const pollingInterval = ref<ReturnType<typeof setInterval> | null>(null);
+const isSendingToHive = ref(false);
+const isSucceeded = ref(false);
+const url = import.meta.env.VITE_BASE_URL;
+const candidateId = ref(0);
 
 onMounted(async () => {
   console.log('onMounted panel..');
@@ -41,21 +45,11 @@ onMounted(async () => {
     }
     
     if(event.data.type === "SET_EXPERIENCES") {
-      experiences.value = event.data.data.map((e: any) => `${e.title}\n${e.company}\n${e.period}`).join("\n\n");
+      experiences.value = event.data.data.map((e: any) => `${e.title}\n${e.company}\n${e.period}\n${e.description}`).join("\n\n");
     }
     
     if(event.data.type === "SET_EDUCATION") {
       education.value = event.data.data.map((e: any) => `${e.school}\n${e.degree}\n${e.years}`).join("\n\n");
-    }
-
-    if(event.data.type === "PROFILE_RESULT") {
-      isLoading.value = true;
-      name.value =  event.data.result.name;
-      designation.value =  event.data.result.designation;
-      experiences.value = await $api(`/api/candidateApp/format-content`, { method: 'POST', body: {content: event.data.result.experience } });
-      education.value = await $api(`/api/candidateApp/format-content`, { method: 'POST', body: {content: event.data.result.education } });
-      notes.value = await $api(`/api/candidateApp/format-content`, { method: 'POST', body: {content: event.data.result.notes } });;
-      isLoading.value = false;
     }
 
     if(event.data.type === "SET_PAGE") {
@@ -87,9 +81,17 @@ const getPosition = async () => {
 }
 
 const sendToHive = async () => {
+  if(name.value === '') {
+    alert('Please fill the name.');
+    return;
+  }
+  if(email.value === '' && phoneNumber.value === '') {
+    alert('Please fill the contact.');
+    return;
+  }
+  isSendingToHive.value = true;
   console.log('sendToHive...');
   console.log('**data** ', name.value, experiences.value, education.value, notes.value, designation.value, email.value);
-  await getPosition();
   let input = {
     name: name.value,
     experience: experiences.value,
@@ -99,7 +101,16 @@ const sendToHive = async () => {
     email: email.value,
     phoneNumber: phoneNumber.value
   };
-  await $api(`/api/candidateApp/create-candidate-from-linkedin`, { method: 'POST', body: input });
+  try{
+    candidateId.value = await $api(`/api/candidateApp/create-candidate-from-linkedin`, { method: 'POST', body: input });
+    isSucceeded.value = true;
+  } catch (error) {
+    console.log('error: ', error);
+    alert('Error: ' + error.message);
+    isSendingToHive.value = false;
+    isSucceeded.value = false;
+  } finally {
+  }
 }
 
 const sendTabMessage = <T = any>(
@@ -119,13 +130,12 @@ const checkIfAtProfilePage = () => {
   }
 
   sendTabMessage(
-      "CHECK_IF_ON_PROFILE_PAGE",
-      (response: { isOnProfilePage?: boolean }) => {
-        if (response?.isOnProfilePage) {
-          clearPolling();
-          isOnProfilePage.value = true;
-        }
+    "CHECK_IF_ON_PROFILE_PAGE", (response: { isOnProfilePage?: boolean }) => {
+      if (response?.isOnProfilePage) {
+        clearPolling();
+        isOnProfilePage.value = true;
       }
+    }
   );
 };
 
@@ -150,9 +160,63 @@ const login = () => {
   sendTabMessage("LOGIN", () => {});
 }
 
+const harvest = () => {
+  sendTabMessage("HARVEST", () => {});
+}
+
+const goTo = () => {
+  let candidateUrl = `${url}/candidates/details/${candidateId.value}`;
+  window.open(candidateUrl, '_blank');
+}
+
+const cancel = () => {
+  isSendingToHive.value = false;
+  isSucceeded.value = false;
+  clearPolling();
+}
+
 </script>
 
 <template>
+  <div class="container" v-if="isSendingToHive">
+    <div class="flex justify-center">
+      <div id="loading" style="align-items: center; justify-content: center; display: flex; flex-direction: column; height: 450px;">
+        <div class="bee">
+          <div class="body">
+            <div class="line"></div>
+          </div>
+          <div>
+            <div class="wing-right"></div>
+            <div class="wing-left"></div>
+          </div>
+        </div>
+        <div style="margin-top: 16px; text-align: center;" v-if="!isSucceeded">
+          <span>Sending Data...</span><br/><br/>
+        </div>
+        <div v-else>
+          <span style="margin-left: 26px;">Candidate Created Successfully!</span><br/><br/>
+          <div class="flex gap-2 justify-center">
+            <button
+                class="btn btn-primary"
+                @click="cancel"
+            >
+              <i-ph-rewind />
+              Back
+            </button>
+
+            <button
+                class="btn btn-success"
+                @click="goTo()"
+            >
+              <i-ph-rocket-launch />
+              Go To Candidate
+            </button>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
   <div class="text-center" v-if="!isLoggedIn">
     <button
         class="btn btn-secondary btn-lg"
@@ -184,7 +248,7 @@ const login = () => {
       </div>
     </div>
   </div>
-  <div v-if="isOnProfilePage && isLoggedIn">
+  <div v-if="isOnProfilePage && isLoggedIn && !isSendingToHive">
     <div class="text-left">
       <div>
         <div class="text-lg font-semibold mb-4">Name</div>
@@ -240,15 +304,6 @@ const login = () => {
         />
       </div>
       <br />
-<!--      <div>-->
-<!--        <div class="text-lg font-semibold mb-4">Notes</div>-->
-<!--        <textarea-->
-<!--          v-model="notes"-->
-<!--          rows="5"-->
-<!--          class="input input-primary"-->
-<!--        />-->
-<!--      </div>-->
-<!--      <br />-->
       <div class="flex gap-2 justify-center">
         <button
           class="btn btn-primary"
@@ -260,10 +315,10 @@ const login = () => {
 
         <button
             class="btn btn-success"
-            @click="checkIfAtProfilePage()"
+            @click="harvest()"
         >
           <i-ph-plant />
-          Harvest
+          Re-Harvest
         </button>
       </div>
     </div>

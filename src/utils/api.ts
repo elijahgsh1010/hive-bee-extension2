@@ -33,7 +33,7 @@ export const $api = ofetch.create({
         const userFriendlyMessage = response._data.error;
 
         const message = userFriendlyMessage || errorMessage?.message || response.statusText || `An error occurred (${response.status})`;
-
+        throw new Error(message);
     },
 
     ignoreResponseError: false

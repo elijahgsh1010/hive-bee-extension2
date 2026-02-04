@@ -18,6 +18,7 @@ declare module 'vue' {
     IPhMoon: typeof import('~icons/ph/moon')['default']
     IPhPlant: typeof import('~icons/ph/plant')['default']
     IPhQuestion: typeof import('~icons/ph/question')['default']
+    IPhRewind: typeof import('~icons/ph/rewind')['default']
     IPhRocketLaunch: typeof import('~icons/ph/rocket-launch')['default']
     IPhSmiley: typeof import('~icons/ph/smiley')['default']
     IPhSun: typeof import('~icons/ph/sun')['default']

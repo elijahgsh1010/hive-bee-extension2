@@ -84,7 +84,7 @@ const hidePanel = () => {
 
           <div class="max-w-md mt-4">
             <button class="btn btn-primary btn-lg" @click="showPanel" v-if="!isShowPanel && isLoggedIn">
-              Show Profile Panel
+              Show Panel
             </button>
 
           </div>
