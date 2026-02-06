@@ -4,7 +4,7 @@ import {json} from "node:stream/consumers";
 import { useBrowserLocalStorage } from "../composables/useBrowserStorage"
 
 let isIframeVisible = false;
-var hasOpenedExperienceTab = false;
+let hasOpenedExperienceTab = false;
 let currentPage = window.location.href;
 let hasOpenedHiveTab = false;
 const loginUrl = import.meta.env.VITE_BASE_URL;
@@ -237,15 +237,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     
     let isProfilePage = checkIfOnProfilePage()
     if(isProfilePage && !hasOpenedExperienceTab) {
-      hasOpenedExperienceTab = true;
-      const experienceUrl= getExperienceUrl();
-      const educationUrl = getEducationUrl();
-      const contactInfoUrl = getContactUrl();
-
-      chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: experienceUrl });
-      chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: educationUrl });
-      chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: window.location.href });
-      chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: contactInfoUrl });
+    
     }
     
     sendResponse({ isOnProfilePage: isProfilePage });
@@ -254,14 +246,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "HARVEST") {
     let isProfilePage = checkIfOnProfilePage()
     if(isProfilePage) {
-      const experienceUrl= getExperienceUrl();
-      const educationUrl = getEducationUrl();
-      const contactInfoUrl = getContactUrl();
-
-      chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: experienceUrl });
-      chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: educationUrl });
-      chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: window.location.href });
-      chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: contactInfoUrl });
+     
+      let experience = getExperience();
+      let education = getEducation2();
+      let name = getNameAndDesignation();
+      postMessageToIframe("SET_NAME", name);
+      postMessageToIframe("SET_EXPERIENCES", experience);
+      postMessageToIframe("SET_EDUCATION", education);
+      // let contactInfo = getContactInfo2();
+      // const experienceUrl= getExperienceUrl();
+      // const educationUrl = getEducationUrl();
+      // const contactInfoUrl = getContactUrl();
+      // chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: experienceUrl });
+      // chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: educationUrl });
+      // chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: window.location.href });
+      // chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: contactInfoUrl });
     }
   }
 
@@ -280,6 +279,295 @@ if (document.readyState === "loading") {
 }
 
 injectIframe();
+
+function getContactInfo2() {
+    return;
+    // Find and click the "Contact info" link
+    const contactLink = Array.from(document.querySelectorAll('a')).find(
+        (a) => a.textContent?.trim() === 'Contact info'
+    );
+
+    if (!contactLink) {
+        callback({ email: '', phone: '' });
+        return;
+    }
+
+    contactLink.click();
+
+    // Wait 2 seconds for dialog to load
+    setTimeout(() => {
+        let email = '';
+        let phone = '';
+
+        // Find all <p> elements and look for "Phone" and "Email" labels
+        const allParagraphs = document.querySelectorAll('p');
+
+        allParagraphs.forEach((p) => {
+            const text = p.textContent?.trim();
+
+            if (text === 'Phone') {
+                // Get the next sibling <p> which contains the phone number
+                const nextP = p.parentElement?.querySelector('p:nth-of-type(2)');
+                if (nextP) {
+                    // Extract just the number (remove "(Mobile)" etc.)
+                    const phoneText = nextP.textContent?.trim() ?? '';
+                    phone = phoneText.replace(/\s*\(.*\)/, '').trim();
+                }
+            }
+
+            if (text === 'Email') {
+                // Get the next sibling <p> which contains the email link
+                const nextP = p.parentElement?.querySelector('p:nth-of-type(2)');
+                if (nextP) {
+                    email = nextP.textContent?.trim() ?? '';
+                }
+            }
+        });
+
+        postMessageToIframe("SET_CONTACT", { email, phone });
+        
+        // Close the dialog
+        const closeButton = document.querySelector<HTMLButtonElement>(
+            'button[aria-label="Dismiss"], button[aria-label="Close"]'
+        );
+        if (closeButton) {
+            closeButton.click();
+        } else {
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        }
+    }, 2000);
+}
+
+function getNameAndDesignation() {
+    // Find the name container
+    const nameContainer = document.querySelector<HTMLElement>(
+        '[data-view-name="profile-top-card-verified-badge"]'
+    );
+
+    // Extract name
+    const name = nameContainer
+        ?.querySelector<HTMLHeadingElement>('h2')
+        ?.textContent
+        ?.trim() ?? '';
+
+    // Walk forward to find the real designation paragraph
+    let designation = '';
+    let current = nameContainer?.parentElement?.nextElementSibling ?? null;
+
+    while (current) {
+        if (
+            current.tagName === 'P' &&
+            current.textContent &&
+            !current.textContent.includes('·')
+        ) {
+            designation = current.textContent.trim();
+            break;
+        }
+        current = current.nextElementSibling;
+    }
+
+    const photoUrl = getProfilePhoto();
+
+    return { name, designation, photoUrl };
+}
+
+function extractDescriptionFromLink(link: any): string {
+    return (
+        link.parentElement
+            ?.querySelector('span[data-testid="expandable-text-box"]')
+            ?.textContent
+            ?.trim() || ""
+    );
+}
+
+function getExperience() {
+    const experienceHeader = Array.from(document.querySelectorAll("h2"))
+        .find(h => h.textContent.trim() === "Experience");
+
+    if (!experienceHeader) return [];
+
+    const experienceSection = experienceHeader.closest("section");
+    if (!experienceSection) return [];
+
+    // Get all experience items
+    const experienceItems = Array.from(
+        experienceSection.querySelectorAll('div[componentkey^="entity-collection-item"]')
+    );
+
+    const seen = new Set();
+    const results: any = [];
+
+    experienceItems.forEach(item => {
+        // Skip if it's just an HR separator
+        if (item.querySelector('hr[role="presentation"]') && !item.querySelector('a, p')) {
+            return;
+        }
+
+        // Check for nested roles (ul > li)
+        const nestedRoles = item.querySelectorAll('ul > li');
+
+        if (nestedRoles.length > 0) {
+            // Multiple roles at same company
+            const companyLinks = item.querySelectorAll('a[href*="/company/"]');
+            const companyLink = Array.from(companyLinks).find(link =>
+                link.querySelector('p')
+            );
+
+            const companyParagraphs = companyLink?.querySelectorAll('p') || [];
+            const company = companyParagraphs[0]?.textContent?.trim() || "";
+
+            nestedRoles.forEach(roleItem => {
+                const roleLink = roleItem.querySelector('a[href*="/company/"]');
+                if (!roleLink) return;
+
+                const roleParagraphs = roleLink.querySelectorAll('p');
+                const title = roleParagraphs[0]?.textContent?.trim() || "";
+
+                // Period is inside the anchor but not in the nested divs
+                const allParasInLink = Array.from(roleLink.querySelectorAll('p'));
+                const period = allParasInLink.find(p =>
+                    /\d+\s*(yr|mo|mos|year|month)/i.test(p.textContent || "")
+                )?.textContent?.trim() || "";
+
+                const description = extractDescriptionFromLink(roleLink);
+
+                const key = `${company}|${title}|${period}`;
+                if (seen.has(key)) return;
+                seen.add(key);
+
+                results.push({ company, title, period, description });
+            });
+        } else {
+            // Single role
+            // Find the main content anchor (not the logo anchor)
+            const allLinks = Array.from(item.querySelectorAll('a[href*="/company/"]'));
+            const contentLink = allLinks.find(link => link.querySelector('p'));
+
+            if (!contentLink) {
+                // No company link (self-employed, etc.) - extract from paragraphs directly
+                const allParagraphs = Array.from(item.querySelectorAll('p'));
+
+                const title = allParagraphs.find(p =>
+                    p.className.includes('_94c14fcf')
+                )?.textContent?.trim() || "";
+
+                const companyPara = allParagraphs.find(p =>
+                    p.className.includes('_19ee2a11') && p.textContent?.includes('·')
+                );
+                const company = companyPara?.textContent?.split('·')[0]?.trim() || "";
+
+                const period = allParagraphs.find(p =>
+                    /\d+\s*(yr|mo|mos|year|month)/i.test(p.textContent || "")
+                )?.textContent?.trim() || "";
+
+                const description = extractDescriptionFromLink(contentLink);
+                
+                const key = `${company}|${title}|${period}`;
+                if (!key || seen.has(key)) return;
+                seen.add(key);
+
+                results.push({ company, title, period, description });
+                return;
+            }
+
+            // Has company link
+            const paragraphs = contentLink.querySelectorAll('p');
+
+            // First <p> = Title
+            const title = paragraphs[0]?.textContent?.trim() || "";
+
+            // Second <p> = Company · Employment type
+            const companyText = paragraphs[1]?.textContent || "";
+            const company = companyText.split('·')[0].trim();
+
+            // Period is third <p> (outside the nested divs but inside anchor)
+            const allParasInLink = Array.from(contentLink.querySelectorAll('p'));
+            const period = allParasInLink.find(p =>
+                /\d+\s*(yr|mo|mos|year|month)/i.test(p.textContent || "")
+            )?.textContent?.trim() || "";
+
+            // Description is in next sibling div after the anchor's parent container
+            const description = extractDescriptionFromLink(contentLink);
+
+            const key = `${company}|${title}|${period}`;
+            if (!key || seen.has(key)) return;
+            seen.add(key);
+
+            results.push({ company, title, period, description });
+        }
+    });
+
+    return results;
+}
+
+function getProfilePhoto() {
+    const photoContainer = document.querySelector('div[aria-label="Profile photo"]');
+    if (photoContainer) {
+        const img = photoContainer.querySelector('img');
+        if (img) {
+            const src = img.getAttribute('src');
+            if (src && src.includes('media.licdn.com')) {
+                return src;
+            }
+        }
+    }
+
+    const loadedImg = document.querySelector('img[data-loaded="true"]');
+    if (loadedImg) {
+        const src = loadedImg.getAttribute('src');
+        if (src && src.includes('profile-displayphoto')) {
+            return src;
+        }
+    }
+    
+    return null;
+}
+
+function getEducation2() {
+    // Find all anchor tags with href containing /school/
+    const schoolLinks = document.querySelectorAll<HTMLAnchorElement>('a[href*="/school/"]');
+
+    const results: { school: string; degree: string; years: string }[] = [];
+    const seen = new Set<string>(); // Avoid duplicates
+
+    schoolLinks.forEach((link) => {
+        // Get all <p> elements within this link
+        const paragraphs = link.querySelectorAll<HTMLParagraphElement>('p');
+
+        if (paragraphs.length < 2) return;
+
+        let school = '';
+        let degree = '';
+        let years = '';
+
+        paragraphs.forEach((p, index) => {
+            const text = p.textContent?.trim() ?? '';
+
+            if (index === 0) {
+                // First <p> is the school name
+                school = text;
+            } else if (/^\d{4}\s*[–-]\s*(\d{4}|Present)$/i.test(text)) {
+                // Matches year pattern like "2013 – 2014"
+                years = text;
+            } else if (!degree) {
+                // Second non-year <p> is the degree
+                degree = text;
+            }
+        });
+
+        // Create a unique key to avoid duplicates (same link appears twice in the HTML)
+        const key = `${school}|${degree}|${years}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+
+        if (school || degree || years) {
+            results.push({ school, degree, years });
+        }
+    });
+
+    return results;
+
+}
 
 function getExperienceItems() {
     const items = document.querySelectorAll<HTMLElement>('li.pvs-list__paged-list-item.artdeco-list__item');
@@ -377,39 +665,6 @@ function getContactInfo(root: ParentNode = document) {
 }
 
 onReady(() => {
-    if (location.pathname.includes('/details/experience/')) {
-        setTimeout(() => {
-            chrome.runtime.sendMessage({type: 'LINKEDIN_EXPERIENCE_RESULT', url: location.href, data: getExperienceItems() });
-            hasOpenedExperienceTab = false;
-        },2000);
-    }
-
-    if (location.pathname.includes('/details/education/')) {
-        setTimeout(() => {
-            chrome.runtime.sendMessage({type: 'LINKEDIN_EDUCATION_RESULT', url: location.href, data: getEducationItems() });
-            hasOpenedExperienceTab = false;
-        },2000);
-    }
-
-    if(location.pathname.includes('/overlay/contact-info/')) {
-        setTimeout(() => {
-            chrome.runtime.sendMessage({type: 'LINKEDIN_CONTACT_RESULT', url: location.href, data: getContactInfo() });
-            hasOpenedExperienceTab = false;
-        },2000);
-    }
-    
-    if(checkIfOnProfilePage()) {
-        setTimeout(() => {
-            const nameLink = document.querySelector<HTMLAnchorElement>('a[href*="/overlay/about-this-profile/"]');
-            const name = nameLink?.getAttribute("aria-label") ?? "";
-            const designationElement = document?.querySelectorAll('.text-body-medium')
-            let designation = designationElement[0]?.textContent || ""
-
-            chrome.runtime.sendMessage({type: 'LINKEDIN_PROFILE_RESULT', url: location.href, data: { name: name?.trimStart().trimEnd(), designation: designation.trimStart().trimEnd() } });
-            hasOpenedExperienceTab = false;
-        }, 2000);
-    }
-
     if(window.location.href.includes("hive.hrnetgroup.com") || window.location.href.includes("localhost")) {
       const token = localStorage.getItem('accessToken');
       if(token) {
@@ -417,5 +672,4 @@ onReady(() => {
         chrome.runtime.sendMessage({type: 'LOGGED_IN', url: loginUrl } );
       }
     }
-    
 });

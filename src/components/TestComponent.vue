@@ -20,6 +20,7 @@ const isSendingToHive = ref(false);
 const isSucceeded = ref(false);
 const url = import.meta.env.VITE_BASE_URL;
 const candidateId = ref(0);
+const photoUrl = ref('');
 
 onMounted(async () => {
   console.log('onMounted panel..');
@@ -37,6 +38,7 @@ onMounted(async () => {
     if(event.data.type === "SET_NAME") {  
       name.value = event.data.data.name;
       designation.value = event.data.data.designation;
+      photoUrl.value = event.data.data.photoUrl || '';
     }
     
     if(event.data.type === "SET_CONTACT") {
@@ -45,7 +47,7 @@ onMounted(async () => {
     }
     
     if(event.data.type === "SET_EXPERIENCES") {
-      experiences.value = event.data.data.map((e: any) => `${e.title}\n${e.company}\n${e.period}\n${e.description}`).join("\n\n");
+      experiences.value = event.data.data.map((e: any) => `${e.company}\n${e.title}\n${e.period}\n${e.description}`).join("\n\n");
     }
     
     if(event.data.type === "SET_EDUCATION") {
@@ -99,7 +101,8 @@ const sendToHive = async () => {
     notes: notes.value,
     designation: designation.value,
     email: email.value,
-    phoneNumber: phoneNumber.value
+    phoneNumber: phoneNumber.value,
+    candidateProfilePicture: await getProfilePhotoAsBase64(photoUrl.value),
   };
   try{
     candidateId.value = await $api(`/api/candidateApp/create-candidate-from-linkedin`, { method: 'POST', body: input });
@@ -161,6 +164,7 @@ const login = () => {
 }
 
 const harvest = () => {
+  photoUrl.value = '';
   sendTabMessage("HARVEST", () => {});
 }
 
@@ -173,6 +177,23 @@ const cancel = () => {
   isSendingToHive.value = false;
   isSucceeded.value = false;
   clearPolling();
+}
+
+async function getProfilePhotoAsBase64(photoUrl: string): Promise<string | null> {
+  try {
+    const response = await fetch(photoUrl);
+    const blob = await response.blob();
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error('Error converting photo to base64:', error);
+    return null;
+  }
 }
 
 </script>
@@ -304,6 +325,16 @@ const cancel = () => {
         />
       </div>
       <br />
+      <div>
+        <div class="text-lg font-semibold mb-4">Profile Photo</div>
+        <div v-if="photoUrl" class="photo-preview">
+          <img :src="photoUrl" alt="Profile Photo" class="profile-photo" />
+        </div>
+        <div v-else class="text-sm text-gray-500">
+          No profile photo available
+        </div>
+      </div>
+      <br />
       <div class="flex gap-2 justify-center">
         <button
           class="btn btn-primary"
@@ -318,7 +349,7 @@ const cancel = () => {
             @click="harvest()"
         >
           <i-ph-plant />
-          Re-Harvest
+          Harvest
         </button>
       </div>
     </div>
@@ -477,5 +508,23 @@ textarea {
 
 input {
   width: 100% !important;
+}
+
+.photo-preview {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  background: #000;
+}
+
+.profile-photo {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #fbc02d;
 }
 </style>
