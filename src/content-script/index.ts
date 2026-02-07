@@ -444,23 +444,36 @@ function getExperience() {
             const contentLink = allLinks.find(link => link.querySelector('p'));
 
             if (!contentLink) {
-                // No company link (self-employed, etc.) - extract from paragraphs directly
+                // No company link (self-employed, etc.) - extract from paragraphs directly using patterns
                 const allParagraphs = Array.from(item.querySelectorAll('p'));
 
+                // Title is typically the first paragraph without '·' or duration pattern
                 const title = allParagraphs.find(p =>
-                    p.className.includes('_94c14fcf')
+                    p.textContent &&
+                    !p.textContent.includes('·') &&
+                    !/\d+\s*(yr|mo|mos|year|month)/i.test(p.textContent)
                 )?.textContent?.trim() || "";
 
+                // Company is in a paragraph with '·' separator
                 const companyPara = allParagraphs.find(p =>
-                    p.className.includes('_19ee2a11') && p.textContent?.includes('·')
+                    p.textContent?.includes('·')
                 );
                 const company = companyPara?.textContent?.split('·')[0]?.trim() || "";
 
+                // Period matches duration pattern
                 const period = allParagraphs.find(p =>
                     /\d+\s*(yr|mo|mos|year|month)/i.test(p.textContent || "")
                 )?.textContent?.trim() || "";
 
-                const description = extractDescriptionFromLink(contentLink);
+                // Description from the item itself
+                const descSpan = item.querySelector('[data-testid="expandable-text-box"]');
+                let description = "";
+                if (descSpan) {
+                    const clone = descSpan.cloneNode(true) as HTMLElement;
+                    const button = clone.querySelector('button');
+                    if (button) button.remove();
+                    description = clone.textContent?.trim() || "";
+                }
                 
                 const key = `${company}|${title}|${period}`;
                 if (!key || seen.has(key)) return;
