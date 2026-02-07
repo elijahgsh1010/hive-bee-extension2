@@ -537,49 +537,67 @@ function getProfilePhoto() {
 }
 
 function getEducation2() {
-    // Find all anchor tags with href containing /school/
-    const schoolLinks = document.querySelectorAll<HTMLAnchorElement>('a[href*="/school/"]');
+    // Find the Education section by heading
+    const educationHeader = Array.from(document.querySelectorAll("h2"))
+        .find(h => h.textContent?.trim() === "Education");
+    
+    if (!educationHeader) return [];
+    
+    const educationSection = educationHeader.closest("section");
+    if (!educationSection) return [];
+
+    // Get all education items by componentkey
+    const educationItems = Array.from(
+        educationSection.querySelectorAll<HTMLElement>('[componentkey]')
+    ).filter(item => {
+        // Filter to only education items (those with school links)
+        return item.querySelector('a[href*="/school/"]') !== null;
+    });
 
     const results: { school: string; degree: string; years: string }[] = [];
-    const seen = new Set<string>(); // Avoid duplicates
+    const seen = new Set<string>();
 
-    schoolLinks.forEach((link) => {
-        // Get all <p> elements within this link
-        const paragraphs = link.querySelectorAll<HTMLParagraphElement>('p');
+    educationItems.forEach((item) => {
+        // Find school link
+        const schoolLink = item.querySelector<HTMLAnchorElement>('a[href*="/school/"]');
+        if (!schoolLink) return;
 
-        if (paragraphs.length < 2) return;
-
+        // Get all paragraphs in the entire item (handles both structures:
+        // 1. Paragraphs inside the <a> tag
+        // 2. Paragraphs in sibling <div role="button">)
+        const allParagraphs = Array.from(item.querySelectorAll('p'));
+        
         let school = '';
         let degree = '';
         let years = '';
 
-        paragraphs.forEach((p, index) => {
+        allParagraphs.forEach((p) => {
             const text = p.textContent?.trim() ?? '';
+            if (!text) return;
 
-            if (index === 0) {
-                // First <p> is the school name
-                school = text;
-            } else if (/^\d{4}\s*[–-]\s*(\d{4}|Present)$/i.test(text)) {
-                // Matches year pattern like "2013 – 2014"
+            // Check if it's a year pattern (2013 – 2014 or 2013 - Present)
+            if (/^\d{4}\s*[–-]\s*(\d{4}|Present)$/i.test(text)) {
                 years = text;
+            } else if (!school) {
+                // First non-year text is school name
+                school = text;
             } else if (!degree) {
-                // Second non-year <p> is the degree
+                // Second non-year text is degree
                 degree = text;
             }
         });
 
-        // Create a unique key to avoid duplicates (same link appears twice in the HTML)
+        // Create a unique key to avoid duplicates
         const key = `${school}|${degree}|${years}`;
-        if (seen.has(key)) return;
+        if (!key || key === '||' || seen.has(key)) return;
         seen.add(key);
 
-        if (school || degree || years) {
+        if (school || degree) {
             results.push({ school, degree, years });
         }
     });
 
     return results;
-
 }
 
 function getExperienceItems() {
