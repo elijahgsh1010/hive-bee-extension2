@@ -164,7 +164,7 @@ const login = () => {
 }
 
 const harvest = () => {
-  photoUrl.value = '';
+  // Don't clear photoUrl - it should persist across profile/details pages
   sendTabMessage("HARVEST", () => {});
 }
 
