@@ -416,8 +416,16 @@ function getExperience() {
             return;
         }
 
-        // Check for nested roles (ul > li)
-        const nestedRoles = item.querySelectorAll('ul > li');
+        // Check for nested roles
+        // The <ul> can be INSIDE the item OR as the next sibling
+        let nestedRolesList = item.querySelector('ul');
+        
+        // If not inside, check if next sibling is a <ul>
+        if (!nestedRolesList && item.nextElementSibling?.tagName === 'UL') {
+            nestedRolesList = item.nextElementSibling as HTMLElement;
+        }
+        
+        const nestedRoles = nestedRolesList ? Array.from(nestedRolesList.querySelectorAll('li')) : [];
 
         if (nestedRoles.length > 0) {
             // Multiple roles at same company
