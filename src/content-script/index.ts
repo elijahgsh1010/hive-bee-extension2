@@ -372,12 +372,25 @@ function getNameAndDesignation() {
 }
 
 function extractDescriptionFromLink(link: any): string {
-    return (
-        link.parentElement
-            ?.querySelector('span[data-testid="expandable-text-box"]')
-            ?.textContent
-            ?.trim() || ""
-    );
+    // Look for description in parent containers
+    let container: Element | null = link.parentElement;
+    while (container && !container.querySelector('[data-testid="expandable-text-box"]')) {
+        container = container.parentElement;
+        // Don't go too far up
+        if (container && container.getAttribute('componentkey')?.startsWith('entity-collection-item')) {
+            break;
+        }
+    }
+    
+    const descSpan = container?.querySelector('[data-testid="expandable-text-box"]');
+    if (descSpan) {
+        const clone = descSpan.cloneNode(true) as HTMLElement;
+        const button = clone.querySelector('button');
+        if (button) button.remove();
+        return clone.textContent?.trim() || "";
+    }
+    
+    return "";
 }
 
 function getExperience() {
@@ -420,14 +433,21 @@ function getExperience() {
                 const roleLink = roleItem.querySelector('a[href*="/company/"]');
                 if (!roleLink) return;
 
-                const roleParagraphs = roleLink.querySelectorAll('p');
-                const title = roleParagraphs[0]?.textContent?.trim() || "";
-
-                // Period is inside the anchor but not in the nested divs
                 const allParasInLink = Array.from(roleLink.querySelectorAll('p'));
+                const title = allParasInLink[0]?.textContent?.trim() || "";
+
+                // Period matches duration pattern
                 const period = allParasInLink.find(p =>
                     /\d+\s*(yr|mo|mos|year|month)/i.test(p.textContent || "")
                 )?.textContent?.trim() || "";
+                
+                // Location (if present in nested role)
+                const location = allParasInLink.find(p => {
+                    const text = p.textContent?.trim() || "";
+                    return text.includes(',') && 
+                           !text.includes('·') && 
+                           !/\d+\s*(yr|mo)/.test(text);
+                })?.textContent?.trim() || "";
 
                 const description = extractDescriptionFromLink(roleLink);
 
@@ -435,7 +455,7 @@ function getExperience() {
                 if (seen.has(key)) return;
                 seen.add(key);
 
-                results.push({ company, title, period, description });
+                results.push({ company, title, period, description, location });
             });
         } else {
             // Single role
@@ -484,29 +504,36 @@ function getExperience() {
             }
 
             // Has company link
-            const paragraphs = contentLink.querySelectorAll('p');
-
+            const allParasInLink = Array.from(contentLink.querySelectorAll('p'));
+            
             // First <p> = Title
-            const title = paragraphs[0]?.textContent?.trim() || "";
+            const title = allParasInLink[0]?.textContent?.trim() || "";
 
             // Second <p> = Company · Employment type
-            const companyText = paragraphs[1]?.textContent || "";
+            const companyText = allParasInLink[1]?.textContent || "";
             const company = companyText.split('·')[0].trim();
 
-            // Period is third <p> (outside the nested divs but inside anchor)
-            const allParasInLink = Array.from(contentLink.querySelectorAll('p'));
+            // Period matches duration pattern (yr/mo)
             const period = allParasInLink.find(p =>
                 /\d+\s*(yr|mo|mos|year|month)/i.test(p.textContent || "")
             )?.textContent?.trim() || "";
+            
+            // Location is a paragraph with comma (City, State/Country) but not duration
+            const location = allParasInLink.find(p => {
+                const text = p.textContent?.trim() || "";
+                return text.includes(',') && 
+                       !text.includes('·') && 
+                       !/\d+\s*(yr|mo)/.test(text);
+            })?.textContent?.trim() || "";
 
-            // Description is in next sibling div after the anchor's parent container
+            // Description is in the item container (not in link)
             const description = extractDescriptionFromLink(contentLink);
 
             const key = `${company}|${title}|${period}`;
             if (!key || seen.has(key)) return;
             seen.add(key);
 
-            results.push({ company, title, period, description });
+            results.push({ company, title, period, description, location });
         }
     });
 
