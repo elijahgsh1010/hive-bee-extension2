@@ -394,12 +394,18 @@ function extractDescriptionFromLink(link: any): string {
 }
 
 function getExperience() {
-    const experienceHeader = Array.from(document.querySelectorAll("h2"))
+    // Look for "Experience" in h2 (main profile page) or p (details page)
+    let experienceHeader = Array.from(document.querySelectorAll("h2"))
         .find(h => h.textContent.trim() === "Experience");
+    
+    if (!experienceHeader) {
+        experienceHeader = Array.from(document.querySelectorAll("p"))
+            .find(p => p.textContent.trim() === "Experience");
+    }
 
     if (!experienceHeader) return [];
 
-    const experienceSection = experienceHeader.closest("section");
+    const experienceSection = experienceHeader.closest("section") || experienceHeader.closest("div");
     if (!experienceSection) return [];
 
     // Get all experience items
