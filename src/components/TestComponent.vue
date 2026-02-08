@@ -299,15 +299,6 @@ async function getProfilePhotoAsBase64(photoUrl: string): Promise<string | null>
       </div>
       <br />
       <div>
-        <div class="text-lg font-semibold mb-4">Designation</div>
-        <input
-            v-model="designation"
-            type="text"
-            class="input input-primary"
-        />
-      </div>
-      <br />
-      <div>
         <div class="text-lg font-semibold mb-4">Experiences</div>
         <textarea
           v-model="experiences"

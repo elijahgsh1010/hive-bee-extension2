@@ -246,22 +246,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "HARVEST") {
     let isProfilePage = checkIfOnProfilePage()
     if(isProfilePage) {
-     
       let experience = getExperience();
       let education = getEducation2();
       let name = getNameAndDesignation();
       postMessageToIframe("SET_NAME", name);
       postMessageToIframe("SET_EXPERIENCES", experience);
       postMessageToIframe("SET_EDUCATION", education);
-      // let contactInfo = getContactInfo2();
-      // const experienceUrl= getExperienceUrl();
-      // const educationUrl = getEducationUrl();
-      // const contactInfoUrl = getContactUrl();
-      // chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: experienceUrl });
-      // chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: educationUrl });
-      // chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: window.location.href });
-      // chrome.runtime.sendMessage({ type: 'SCRAPE_LINKEDIN_EXPERIENCE', url: contactInfoUrl });
+      return;
     }
+    
+    if(window.location.href.includes("/details/experience/") ) {
+      let experience = getExperience();
+      postMessageToIframe("SET_EXPERIENCES", experience);
+      return;
+    }
+
+    if(window.location.href.includes("/details/education/") ) {
+      let education = getEducation2();
+      postMessageToIframe("SET_EDUCATION", education);
+      return;
+    }
+    
   }
 
   if (message.type === "LOGIN") {
@@ -394,165 +399,122 @@ function extractDescriptionFromLink(link: any): string {
 }
 
 function getExperience() {
-    // Look for "Experience" in h2 (main profile page) or p (details page)
-    let experienceHeader = Array.from(document.querySelectorAll("h2"))
-        .find(h => h.textContent.trim() === "Experience");
-    
-    if (!experienceHeader) {
-        experienceHeader = Array.from(document.querySelectorAll("p"))
-            .find(p => p.textContent.trim() === "Experience");
-    }
+    // --- 1. Find Experience section (details view OR main view) ---
+    let experienceHeader =
+        document.querySelector('[data-testid^="profile_ExperienceDetailsSection"] p') ||
+        Array.from(document.querySelectorAll("h2, p"))
+            .find(el => el.textContent?.trim() === "Experience");
 
     if (!experienceHeader) return [];
 
-    const experienceSection = experienceHeader.closest("section") || experienceHeader.closest("div");
+    const experienceSection =
+        experienceHeader.closest('[data-component-type="LazyColumn"]') ||
+        experienceHeader.closest("section") ||
+        experienceHeader.closest("div");
+
     if (!experienceSection) return [];
 
-    // Get all experience items
+    // --- 2. Collect all top-level experience items ---
     const experienceItems = Array.from(
-        experienceSection.querySelectorAll('div[componentkey^="entity-collection-item"]')
+        experienceSection.querySelectorAll('[componentkey^="entity-collection-item"]')
     );
 
-    const seen = new Set();
-    const results: any = [];
+    const results: any[] = [];
+    const seen = new Set<string>();
 
     experienceItems.forEach(item => {
-        // Skip if it's just an HR separator
+        // Skip separators
         if (item.querySelector('hr[role="presentation"]') && !item.querySelector('a, p')) {
             return;
         }
 
-        // Check for nested roles
-        // The <ul> can be INSIDE the item OR as the next sibling
-        let nestedRolesList = item.querySelector('ul');
-        
-        // If not inside, check if next sibling is a <ul>
-        if (!nestedRolesList && item.nextElementSibling?.tagName === 'UL') {
-            nestedRolesList = item.nextElementSibling as HTMLElement;
+        // --- 3. Detect nested roles ---
+        let rolesList = item.querySelector('ul');
+        if (!rolesList && item.nextElementSibling?.tagName === 'UL') {
+            rolesList = item.nextElementSibling as HTMLUListElement;
         }
-        
-        const nestedRoles = nestedRolesList ? Array.from(nestedRolesList.querySelectorAll('li')) : [];
 
-        if (nestedRoles.length > 0) {
-            // Multiple roles at same company
-            const companyLinks = item.querySelectorAll('a[href*="/company/"]');
-            const companyLink = Array.from(companyLinks).find(link =>
-                link.querySelector('p')
-            );
+        // --- 4. Extract company name from parent block ---
+        const company =
+            item.querySelector('a[href*="/company/"] p')?.textContent?.trim() || "";
 
-            const companyParagraphs = companyLink?.querySelectorAll('p') || [];
-            const company = companyParagraphs[0]?.textContent?.trim() || "";
+        // ---------- MULTI-ROLE COMPANY ----------
+        if (rolesList) {
+            const roles = Array.from(rolesList.querySelectorAll('li'));
 
-            nestedRoles.forEach(roleItem => {
-                const roleLink = roleItem.querySelector('a[href*="/company/"]');
+            roles.forEach(role => {
+                const roleLink = role.querySelector('a[href*="/company/"]');
                 if (!roleLink) return;
 
-                const allParasInLink = Array.from(roleLink.querySelectorAll('p'));
-                const title = allParasInLink[0]?.textContent?.trim() || "";
+                const paragraphs = Array.from(roleLink.querySelectorAll('p'));
 
-                // Period matches duration pattern
-                const period = allParasInLink.find(p =>
-                    /\d+\s*(yr|mo|mos|year|month)/i.test(p.textContent || "")
-                )?.textContent?.trim() || "";
-                
-                // Location (if present in nested role)
-                const location = allParasInLink.find(p => {
-                    const text = p.textContent?.trim() || "";
-                    return text.includes(',') && 
-                           !text.includes('·') && 
-                           !/\d+\s*(yr|mo)/.test(text);
-                })?.textContent?.trim() || "";
+                const title = paragraphs[0]?.textContent?.trim() || "";
+                const period = paragraphs
+                    .find(p => /\d+\s*(yr|mo|year|month)/i.test(p.textContent || ""))
+                    ?.textContent?.trim() || "";
 
-                const description = extractDescriptionFromLink(roleLink);
+                const location = paragraphs
+                    .find(p => {
+                        const t = p.textContent || "";
+                        return t.includes(",") && !/\d+\s*(yr|mo)/i.test(t);
+                    })
+                    ?.textContent?.trim() || "";
+
+                const description =
+                    role.querySelector('[data-testid="expandable-text-box"]')
+                        ?.textContent?.trim() || "";
 
                 const key = `${company}|${title}|${period}`;
                 if (seen.has(key)) return;
                 seen.add(key);
 
-                results.push({ company, title, period, description, location });
+                results.push({ company, title, period, location, description });
             });
-        } else {
-            // Single role
-            // Find the main content anchor (not the logo anchor)
-            const allLinks = Array.from(item.querySelectorAll('a[href*="/company/"]'));
-            const contentLink = allLinks.find(link => link.querySelector('p'));
 
-            if (!contentLink) {
-                // No company link (self-employed, etc.) - extract from paragraphs directly using patterns
-                const allParagraphs = Array.from(item.querySelectorAll('p'));
-
-                // Title is typically the first paragraph without '·' or duration pattern
-                const title = allParagraphs.find(p =>
-                    p.textContent &&
-                    !p.textContent.includes('·') &&
-                    !/\d+\s*(yr|mo|mos|year|month)/i.test(p.textContent)
-                )?.textContent?.trim() || "";
-
-                // Company is in a paragraph with '·' separator
-                const companyPara = allParagraphs.find(p =>
-                    p.textContent?.includes('·')
-                );
-                const company = companyPara?.textContent?.split('·')[0]?.trim() || "";
-
-                // Period matches duration pattern
-                const period = allParagraphs.find(p =>
-                    /\d+\s*(yr|mo|mos|year|month)/i.test(p.textContent || "")
-                )?.textContent?.trim() || "";
-
-                // Description from the item itself
-                const descSpan = item.querySelector('[data-testid="expandable-text-box"]');
-                let description = "";
-                if (descSpan) {
-                    const clone = descSpan.cloneNode(true) as HTMLElement;
-                    const button = clone.querySelector('button');
-                    if (button) button.remove();
-                    description = clone.textContent?.trim() || "";
-                }
-                
-                const key = `${company}|${title}|${period}`;
-                if (!key || seen.has(key)) return;
-                seen.add(key);
-
-                results.push({ company, title, period, description });
-                return;
-            }
-
-            // Has company link
-            const allParasInLink = Array.from(contentLink.querySelectorAll('p'));
-            
-            // First <p> = Title
-            const title = allParasInLink[0]?.textContent?.trim() || "";
-
-            // Second <p> = Company · Employment type
-            const companyText = allParasInLink[1]?.textContent || "";
-            const company = companyText.split('·')[0].trim();
-
-            // Period matches duration pattern (yr/mo)
-            const period = allParasInLink.find(p =>
-                /\d+\s*(yr|mo|mos|year|month)/i.test(p.textContent || "")
-            )?.textContent?.trim() || "";
-            
-            // Location is a paragraph with comma (City, State/Country) but not duration
-            const location = allParasInLink.find(p => {
-                const text = p.textContent?.trim() || "";
-                return text.includes(',') && 
-                       !text.includes('·') && 
-                       !/\d+\s*(yr|mo)/.test(text);
-            })?.textContent?.trim() || "";
-
-            // Description is in the item container (not in link)
-            const description = extractDescriptionFromLink(contentLink);
-
-            const key = `${company}|${title}|${period}`;
-            if (!key || seen.has(key)) return;
-            seen.add(key);
-
-            results.push({ company, title, period, description, location });
+            return;
         }
+
+        // ---------- SINGLE ROLE ----------
+        const contentLink = item.querySelector('a[href*="/company/"]:has(p)');
+        if (!contentLink) return;
+
+        const paragraphs = Array.from(contentLink.querySelectorAll('p'));
+
+        const title = paragraphs[0]?.textContent?.trim() || "";
+        const companyText = paragraphs[1]?.textContent || "";
+        const companyName = companyText.split('·')[0].trim();
+
+        const period = paragraphs
+            .find(p => /\d+\s*(yr|mo|year|month)/i.test(p.textContent || ""))
+            ?.textContent?.trim() || "";
+
+        const location = paragraphs
+            .find(p => {
+                const t = p.textContent || "";
+                return t.includes(",") && !/\d+\s*(yr|mo)/i.test(t);
+            })
+            ?.textContent?.trim() || "";
+
+        const description =
+            item.querySelector('[data-testid="expandable-text-box"]')
+                ?.textContent?.trim() || "";
+
+        const key = `${companyName}|${title}|${period}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+
+        results.push({
+            company: companyName,
+            title,
+            period,
+            location,
+            description
+        });
     });
 
     return results;
 }
+
 
 function getProfilePhoto() {
     const photoContainer = document.querySelector('div[aria-label="Profile photo"]');
