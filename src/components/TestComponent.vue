@@ -164,7 +164,6 @@ const login = () => {
 }
 
 const harvest = () => {
-  photoUrl.value = '';
   sendTabMessage("HARVEST", () => {});
 }
 
