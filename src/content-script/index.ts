@@ -279,11 +279,114 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", () => {
     injectIframe();
+    startContactInfoDetection();
     return;
   });
 }
 
 injectIframe();
+startContactInfoDetection();
+
+// Track if we've already extracted contact info for the current dialog
+let lastExtractedContactDialog: Element | null = null;
+
+/**
+ * Detects if a Contact Info dialog is open and extracts phone/email
+ */
+function detectAndExtractContactInfo() {
+    // Find the contact info dialog
+    const dialog = document.querySelector('dialog[data-testid="dialog"][open]');
+    if (!dialog) {
+        lastExtractedContactDialog = null;
+        return;
+    }
+    
+    // Check if this is the Contact Info dialog by looking for the header
+    const header = dialog.querySelector('h2');
+    if (!header || !header.textContent?.includes('Contact info')) {
+        return;
+    }
+    
+    // Skip if we already extracted from this dialog instance
+    if (lastExtractedContactDialog === dialog) {
+        return;
+    }
+    
+    console.log('[HiveBee] Contact Info dialog detected, extracting...');
+    
+    let phone = '';
+    let email = '';
+    
+    // Extract Phone - look for phone-handset-small SVG
+    const phoneSvg = dialog.querySelector('svg#phone-handset-small');
+    if (phoneSvg) {
+        // Get the parent container and find the phone number
+        const phoneContainer = phoneSvg.closest('div[componentkey]') || phoneSvg.parentElement?.parentElement;
+        if (phoneContainer) {
+            // Look for the span with the phone number (first span in the second <p>)
+            const paragraphs = phoneContainer.querySelectorAll('p');
+            for (const p of paragraphs) {
+                // Skip the "Phone" label
+                if (p.textContent?.trim() === 'Phone') continue;
+                
+                // Get the phone number from the span or the paragraph text
+                const phoneSpan = p.querySelector('span');
+                if (phoneSpan) {
+                    const phoneText = phoneSpan.textContent?.trim() || '';
+                    if (phoneText && /[\d\s\-\+\(\)]+/.test(phoneText)) {
+                        phone = phoneText;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    // Extract Email - look for envelope-medium SVG or mailto: link
+    const emailSvg = dialog.querySelector('svg#envelope-medium');
+    if (emailSvg) {
+        const emailContainer = emailSvg.closest('div[componentkey]') || emailSvg.parentElement?.parentElement;
+        if (emailContainer) {
+            // Look for mailto: link
+            const mailtoLink = emailContainer.querySelector('a[href^="mailto:"]');
+            if (mailtoLink) {
+                email = mailtoLink.textContent?.trim() || '';
+                // Fallback to href if text is empty
+                if (!email) {
+                    const href = mailtoLink.getAttribute('href') || '';
+                    email = href.replace('mailto:', '');
+                }
+            }
+        }
+    }
+    
+    // Fallback: search for mailto: link anywhere in dialog
+    if (!email) {
+        const mailtoLink = dialog.querySelector('a[href^="mailto:"]');
+        if (mailtoLink) {
+            email = mailtoLink.textContent?.trim() || mailtoLink.getAttribute('href')?.replace('mailto:', '') || '';
+        }
+    }
+    
+    // Only post if we found at least one piece of contact info
+    if (phone || email) {
+        console.log('[HiveBee] Extracted contact info:', { phone, email });
+        postMessageToIframe("SET_CONTACT", { phone, email });
+        lastExtractedContactDialog = dialog;
+    }
+}
+
+/**
+ * Starts the interval to detect contact info dialog
+ */
+function startContactInfoDetection() {
+    // Run every 1 second
+    setInterval(() => {
+        detectAndExtractContactInfo();
+    }, 1000);
+    
+    console.log('[HiveBee] Contact info detection started (1s interval)');
+}
 
 function getContactInfo2() {
     return;
