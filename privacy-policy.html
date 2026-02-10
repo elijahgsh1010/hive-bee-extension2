@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hive - Privacy Policy</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            color: #333;
+            background: #f9f9f9;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #fbc02d;
+            border-bottom: 3px solid #fbc02d;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        h3 {
+            color: #666;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        .last-updated {
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 30px;
+        }
+        ul {
+            margin-left: 20px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 0.9em;
+        }
+        .summary-box {
+            background: #fff9e6;
+            border-left: 4px solid #fbc02d;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .summary-box h2 {
+            margin-top: 0;
+            color: #fbc02d;
+        }
+        .icon {
+            color: #4caf50;
+            margin-right: 5px;
+        }
+        .icon-no {
+            color: #f44336;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐝 Privacy Policy for Hive - LinkedIn Profile Harvester</h1>
+        <p class="last-updated"><strong>Last Updated:</strong> February 10, 2026</p>
+
+        <div class="summary-box">
+            <h2>📋 Quick Summary</h2>
+            <ul>
+                <li><span class="icon">✅</span> All data processing happens in your browser</li>
+                <li><span class="icon">✅</span> No cloud storage or third-party services</li>
+                <li><span class="icon">✅</span> Data sent only to YOUR configured backend</li>
+                <li><span class="icon">✅</span> You control where data goes and how it's stored</li>
+                <li><span class="icon">✅</span> We have zero access to your harvested data</li>
+            </ul>
+        </div>
+
+        <h2>1. Introduction</h2>
+        <p>Hive ("we", "our", or "the Extension") is a Chrome browser extension designed to help recruiters, researchers, and business professionals extract publicly available LinkedIn profile information for legitimate business purposes.</p>
+        <p>This Privacy Policy explains how Hive handles data when you use the extension.</p>
+
+        <h2>2. Data We Collect</h2>
+        
+        <h3>2.1 LinkedIn Profile Data</h3>
+        <p>When you click the "Harvest" button, Hive extracts the following information from the LinkedIn profile currently displayed in your browser:</p>
+        <ul>
+            <li><strong>Personal Information:</strong> Full name, headline, location</li>
+            <li><strong>Professional Information:</strong> Current position, company, work experience (titles, companies, dates, descriptions)</li>
+            <li><strong>Education:</strong> Schools attended, degrees obtained, years of study</li>
+            <li><strong>Contact Information:</strong> Email address and phone number (when available in the LinkedIn contact info section)</li>
+            <li><strong>Profile Photo:</strong> Profile picture URL and image data</li>
+            <li><strong>Profile URL:</strong> The LinkedIn profile URL you're currently viewing</li>
+        </ul>
+
+        <h3>2.2 Technical Data</h3>
+        <ul>
+            <li><strong>API Endpoint Configuration:</strong> The backend URL you configure for sending harvested data</li>
+            <li><strong>Authentication Tokens:</strong> Access tokens for your configured backend API (stored locally in your browser)</li>
+        </ul>
+
+        <h2>3. How We Use Your Data</h2>
+        
+        <h3>3.1 Local Processing Only</h3>
+        <p>All data extraction happens <strong>entirely within your browser</strong>. Hive:</p>
+        <ul>
+            <li><span class="icon">✅</span> Extracts data from the LinkedIn page you're viewing</li>
+            <li><span class="icon">✅</span> Displays it in the extension interface for your review</li>
+            <li><span class="icon">✅</span> Sends data <strong>only</strong> to your configured backend API endpoint when you click "Send to Hive"</li>
+        </ul>
+
+        <h3>3.2 No Cloud Storage</h3>
+        <p>We <strong>do not</strong>:</p>
+        <ul>
+            <li><span class="icon-no">❌</span> Store any harvested data on our servers</li>
+            <li><span class="icon-no">❌</span> Transmit data to any third-party services (except your configured backend)</li>
+            <li><span class="icon-no">❌</span> Process or analyze your data in any way</li>
+            <li><span class="icon-no">❌</span> Have access to your LinkedIn credentials or session</li>
+        </ul>
+
+        <h3>3.3 Your Backend API</h3>
+        <p>When you click "Send to Hive", the harvested data is sent via HTTPS POST request to:</p>
+        <pre><code>YOUR_CONFIGURED_API_ENDPOINT/api/candidateApp/create-candidate-from-linkedin</code></pre>
+        <p><strong>You control:</strong></p>
+        <ul>
+            <li>Where this data is sent (you configure the API endpoint)</li>
+            <li>How it's stored (on your own backend/database)</li>
+            <li>Who has access to it (your backend permissions)</li>
+            <li>How long it's retained (your data retention policy)</li>
+        </ul>
+
+        <h2>4. Data Storage</h2>
+        
+        <h3>4.1 Browser Local Storage</h3>
+        <p>Hive stores the following <strong>locally in your browser only</strong>:</p>
+        <ul>
+            <li><strong>Access Token:</strong> For authenticating with your backend API</li>
+            <li><strong>API Endpoint URL:</strong> The base URL of your backend</li>
+        </ul>
+        <p>This data is stored using Chrome's <code>chrome.storage.local</code> API and never leaves your device unless you explicitly uninstall the extension or clear browser data.</p>
+
+        <h3>4.2 No Remote Storage</h3>
+        <p>Hive does <strong>not</strong> maintain any databases, servers, or cloud storage infrastructure. All harvested data goes directly from your browser to your configured backend.</p>
+
+        <h2>5. Data Sharing and Third Parties</h2>
+        
+        <h3>5.1 LinkedIn</h3>
+        <p>Hive accesses publicly available LinkedIn profile information displayed in your browser. We do not:</p>
+        <ul>
+            <li>Use LinkedIn's official API</li>
+            <li>Transmit any data to LinkedIn</li>
+            <li>Modify or interact with LinkedIn's services beyond reading displayed content</li>
+        </ul>
+
+        <h3>5.2 Your Backend API</h3>
+        <p>When you click "Send to Hive", data is transmitted to <strong>your configured backend only</strong>. You are responsible for:</p>
+        <ul>
+            <li>The security of your backend API</li>
+            <li>Compliance with data protection laws (GDPR, CCPA, etc.)</li>
+            <li>How your backend stores and uses the harvested data</li>
+        </ul>
+
+        <h3>5.3 No Other Third Parties</h3>
+        <p>Hive does not share data with:</p>
+        <ul>
+            <li>Analytics services</li>
+            <li>Advertising networks</li>
+            <li>Data brokers</li>
+            <li>Any other third parties</li>
+        </ul>
+
+        <h2>6. Data Security</h2>
+        
+        <h3>6.1 In-Browser Security</h3>
+        <ul>
+            <li>All data extraction happens in your browser's isolated extension context</li>
+            <li>Data is transmitted to your backend via <strong>HTTPS only</strong> (if your backend uses HTTPS)</li>
+            <li>Authentication tokens are stored securely using Chrome's storage API</li>
+        </ul>
+
+        <h3>6.2 Your Responsibility</h3>
+        <p>Since you control the backend API, <strong>you are responsible for</strong>:</p>
+        <ul>
+            <li>Securing your API endpoint (HTTPS, authentication, authorization)</li>
+            <li>Protecting harvested data in your database</li>
+            <li>Compliance with data protection regulations</li>
+            <li>Access controls and user permissions</li>
+        </ul>
+
+        <h2>7. User Rights and Controls</h2>
+        
+        <h3>7.1 Data Review Before Sending</h3>
+        <ul>
+            <li>You can <strong>review all harvested data</strong> in the extension UI before sending it</li>
+            <li>You can <strong>edit</strong> any fields (name, email, phone, experience, education)</li>
+            <li>You can <strong>choose not to send</strong> data by closing the extension without clicking "Send to Hive"</li>
+        </ul>
+
+        <h3>7.2 Clear Data</h3>
+        <ul>
+            <li>Click the <strong>"Clear"</strong> button to remove all data from the extension form</li>
+            <li>Uninstall the extension to remove all locally stored settings and tokens</li>
+        </ul>
+
+        <h3>7.3 Access and Deletion</h3>
+        <p>To request deletion of data sent to your backend:</p>
+        <ul>
+            <li>Contact your organization's backend administrator (you control this data)</li>
+            <li>Hive itself has no access to this data and cannot delete it</li>
+        </ul>
+
+        <h2>8. Compliance with LinkedIn Terms of Service</h2>
+        
+        <h3>8.1 Responsible Use</h3>
+        <p>By using Hive, you agree to:</p>
+        <ul>
+            <li>Respect LinkedIn's Terms of Service</li>
+            <li>Only extract data from profiles you have legitimate access to</li>
+            <li>Use harvested data for lawful purposes only (recruitment, research, business development)</li>
+            <li>Comply with applicable data protection laws (GDPR, CCPA, etc.)</li>
+        </ul>
+
+        <h3>8.2 Rate Limiting</h3>
+        <p>LinkedIn may impose rate limits or restrict accounts that excessively scrape profiles. We recommend:</p>
+        <ul>
+            <li>Using Hive responsibly (avoid bulk scraping)</li>
+            <li>Respecting LinkedIn's robots.txt and terms</li>
+            <li>Implementing appropriate delays between harvests</li>
+        </ul>
+
+        <h2>9. International Data Transfers</h2>
+        <p>If your backend API is hosted in a different country than where you're using the extension:</p>
+        <ul>
+            <li>Data will be transferred internationally when you click "Send to Hive"</li>
+            <li>You are responsible for ensuring compliance with cross-border data transfer regulations (e.g., GDPR Chapter V)</li>
+        </ul>
+
+        <h2>10. Children's Privacy</h2>
+        <p>Hive is not intended for use by individuals under 18 years of age. We do not knowingly collect data from children.</p>
+
+        <h2>11. Changes to This Policy</h2>
+        <p>We may update this Privacy Policy from time to time. Changes will be indicated by:</p>
+        <ul>
+            <li>Updating the "Last Updated" date at the top of this document</li>
+            <li>Notifying users via extension update notes (if significant changes occur)</li>
+        </ul>
+        <p>Continued use of Hive after changes constitutes acceptance of the updated policy.</p>
+
+        <h2>12. Contact Information</h2>
+        <p>For questions, concerns, or requests regarding this Privacy Policy:</p>
+        <ul>
+            <li><strong>Developer Contact:</strong>
+                <ul>
+                    <li>Email: <a href="mailto:your-email@domain.com">your-email@domain.com</a></li>
+                    <li>GitHub: <a href="https://github.com/your-org/hive-bee-extension2">https://github.com/your-org/hive-bee-extension2</a></li>
+                </ul>
+            </li>
+            <li><strong>For data-related requests</strong> (access, deletion, modification):
+                <ul>
+                    <li>Contact your organization's backend administrator (Hive does not store your data)</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h2>13. Legal Disclaimer</h2>
+        <p>Hive is provided "as is" without warranties. You are solely responsible for:</p>
+        <ul>
+            <li>Compliance with LinkedIn's Terms of Service</li>
+            <li>Compliance with applicable data protection laws (GDPR, CCPA, etc.)</li>
+            <li>The security and use of data sent to your backend</li>
+            <li>Any consequences of using Hive for unauthorized or unlawful purposes</li>
+        </ul>
+
+        <h2>14. Your Consent</h2>
+        <p>By installing and using Hive, you acknowledge that you have read and understood this Privacy Policy and agree to its terms.</p>
+
+        <hr style="margin: 40px 0; border: none; border-top: 1px solid #ddd;">
+
+        <div class="summary-box">
+            <h2>📋 Summary</h2>
+            <ul>
+                <li><span class="icon">✅</span> All data processing happens in your browser</li>
+                <li><span class="icon">✅</span> No cloud storage or third-party services</li>
+                <li><span class="icon">✅</span> Data sent only to YOUR configured backend</li>
+                <li><span class="icon">✅</span> You control where data goes and how it's stored</li>
+                <li><span class="icon">✅</span> We have zero access to your harvested data</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
