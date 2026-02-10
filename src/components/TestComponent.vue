@@ -538,12 +538,11 @@ input {
 }
 
 .btn-clear {
-  width: 100%;
+  width: 77%;
   background-color: #ec4899;
   color: white;
   border: none;
   padding: 8px 16px;
-  border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;

@@ -20,6 +20,7 @@ declare module 'vue' {
     IPhRocketLaunch: typeof import('~icons/ph/rocket-launch')['default']
     IPhSmiley: typeof import('~icons/ph/smiley')['default']
     IPhSun: typeof import('~icons/ph/sun')['default']
+    IPhTrash: typeof import('~icons/ph/trash')['default']
     LoadingSpinner: typeof import('./../components/state/LoadingSpinner.vue')['default']
     LocaleSwitch: typeof import('./../components/LocaleSwitch.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
