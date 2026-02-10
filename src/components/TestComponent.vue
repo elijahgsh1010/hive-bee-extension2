@@ -167,6 +167,16 @@ const harvest = () => {
   sendTabMessage("HARVEST", () => {});
 }
 
+const clearData = () => {
+  name.value = '';
+  phoneNumber.value = '';
+  email.value = '';
+  experiences.value = '';
+  education.value = '';
+  photoUrl.value = '';
+  designation.value = '';
+}
+
 const goTo = () => {
   let candidateUrl = `${url}/candidates/details/${candidateId.value}`;
   window.open(candidateUrl, '_blank');
@@ -340,6 +350,15 @@ async function getProfilePhotoAsBase64(photoUrl: string): Promise<string | null>
         >
           <i-ph-plant />
           Harvest
+        </button>
+      </div>
+      <div class="flex justify-center" style="margin-top: 8px;">
+        <button
+            class="btn btn-clear"
+            @click="clearData()"
+        >
+          <i-ph-trash />
+          Clear
         </button>
       </div>
     </div>
@@ -516,5 +535,25 @@ input {
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid #fbc02d;
+}
+
+.btn-clear {
+  width: 100%;
+  background-color: #ec4899;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-clear:hover {
+  background-color: #db2777;
 }
 </style>
