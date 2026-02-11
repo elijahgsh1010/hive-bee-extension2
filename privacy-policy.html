@@ -8,7 +8,7 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 40px 20px;
             color: #333;
@@ -79,31 +79,52 @@
             color: #f44336;
             margin-right: 5px;
         }
+        .internal-notice {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .internal-notice h3 {
+            margin-top: 0;
+            color: #1976d2;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🐝 Privacy Policy for Hive - LinkedIn Profile Harvester</h1>
-        <p class="last-updated"><strong>Last Updated:</strong> February 10, 2026</p>
+        <p class="last-updated"><strong>Last Updated:</strong> February 11, 2026</p>
+
+        <div class="internal-notice">
+            <h3>🏢 Internal Tool Notice</h3>
+            <p><strong>This extension is designed for internal use by authorized recruitment consultants within our organization.</strong> All harvested data is sent to our proprietary Hive recruitment system for candidate management purposes.</p>
+        </div>
 
         <div class="summary-box">
             <h2>📋 Quick Summary</h2>
             <ul>
-                <li><span class="icon">✅</span> All data processing happens in your browser</li>
-                <li><span class="icon">✅</span> No cloud storage or third-party services</li>
-                <li><span class="icon">✅</span> Data sent only to YOUR configured backend</li>
-                <li><span class="icon">✅</span> You control where data goes and how it's stored</li>
-                <li><span class="icon">✅</span> We have zero access to your harvested data</li>
+                <li>🏢 <strong>Internal Tool:</strong> For authorized recruitment consultants only</li>
+                <li>🔐 <strong>Authentication Required:</strong> Users must log in to our Hive recruitment system</li>
+                <li>📊 <strong>Data Goes to Our System:</strong> All harvested data is stored in our proprietary recruitment database</li>
+                <li>✅ <strong>Controlled Access:</strong> Only authorized personnel can view candidate data</li>
+                <li>🔒 <strong>Secure Transmission:</strong> All data is encrypted in transit (HTTPS)</li>
+                <li>📋 <strong>Recruitment Use Only:</strong> Data is used for candidate evaluation, interviews, and communication</li>
+                <li>🚫 <strong>No Third Parties:</strong> Data is not shared with external services</li>
             </ul>
         </div>
 
         <h2>1. Introduction</h2>
-        <p>Hive ("we", "our", or "the Extension") is a Chrome browser extension designed to help recruiters, researchers, and business professionals extract publicly available LinkedIn profile information for legitimate business purposes.</p>
-        <p>This Privacy Policy explains how Hive handles data when you use the extension.</p>
+        <p>Hive ("we", "our", or "the Extension") is a Chrome browser extension designed for internal use by recruitment consultants at our organization. The extension extracts publicly available LinkedIn profile information and sends it to our proprietary Hive recruitment system for candidate management, interview scheduling, and communication workflows.</p>
 
-        <h2>2. Data We Collect</h2>
+        <h2>2. Who This Extension Is For</h2>
+        <p><strong>Internal Use Only:</strong> Hive is designed for use by authorized recruitment consultants within our organization. Users must authenticate with their Hive system credentials to use the extension.</p>
+        <p><strong>Not for Public Distribution:</strong> While the source code may be publicly available, the extension requires access to our internal Hive recruitment system and is not intended for use by external parties.</p>
+
+        <h2>3. Data We Collect</h2>
         
-        <h3>2.1 LinkedIn Profile Data</h3>
+        <h3>3.1 LinkedIn Profile Data</h3>
         <p>When you click the "Harvest" button, Hive extracts the following information from the LinkedIn profile currently displayed in your browser:</p>
         <ul>
             <li><strong>Personal Information:</strong> Full name, headline, location</li>
@@ -114,197 +135,241 @@
             <li><strong>Profile URL:</strong> The LinkedIn profile URL you're currently viewing</li>
         </ul>
 
-        <h3>2.2 Technical Data</h3>
+        <h3>3.2 Authentication Data</h3>
         <ul>
-            <li><strong>API Endpoint Configuration:</strong> The backend URL you configure for sending harvested data</li>
-            <li><strong>Authentication Tokens:</strong> Access tokens for your configured backend API (stored locally in your browser)</li>
+            <li><strong>Hive System Credentials:</strong> Login credentials for authenticating with our internal Hive recruitment system</li>
+            <li><strong>Access Tokens:</strong> Session tokens stored locally in your browser for maintaining authenticated sessions</li>
         </ul>
 
-        <h2>3. How We Use Your Data</h2>
+        <h2>4. How We Use Your Data</h2>
         
-        <h3>3.1 Local Processing Only</h3>
-        <p>All data extraction happens <strong>entirely within your browser</strong>. Hive:</p>
+        <h3>4.1 Recruitment Workflow</h3>
+        <p>When you click "Send to Hive", the harvested profile data is transmitted to our internal Hive recruitment system where it is:</p>
+        <ul>
+            <li>Stored as a candidate record in our recruitment database</li>
+            <li>Made available to authorized recruitment consultants</li>
+            <li>Used for recruitment activities including:
+                <ul>
+                    <li>Candidate evaluation and screening</li>
+                    <li>Interview scheduling and coordination</li>
+                    <li>Email communication with candidates</li>
+                    <li>Matching candidates with job opportunities</li>
+                    <li>Maintaining recruitment pipeline and history</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3>4.2 Local Processing</h3>
+        <p>All data extraction happens <strong>entirely within your browser</strong> before being transmitted to our Hive system. The extension:</p>
         <ul>
             <li><span class="icon">✅</span> Extracts data from the LinkedIn page you're viewing</li>
-            <li><span class="icon">✅</span> Displays it in the extension interface for your review</li>
-            <li><span class="icon">✅</span> Sends data <strong>only</strong> to your configured backend API endpoint when you click "Send to Hive"</li>
+            <li><span class="icon">✅</span> Displays it in the extension interface for your review and editing</li>
+            <li><span class="icon">✅</span> Sends data to our Hive recruitment system when you click "Send to Hive"</li>
         </ul>
 
-        <h3>3.2 No Cloud Storage</h3>
+        <h3>4.3 No Third-Party Services</h3>
         <p>We <strong>do not</strong>:</p>
         <ul>
-            <li><span class="icon-no">❌</span> Store any harvested data on our servers</li>
-            <li><span class="icon-no">❌</span> Transmit data to any third-party services (except your configured backend)</li>
-            <li><span class="icon-no">❌</span> Process or analyze your data in any way</li>
-            <li><span class="icon-no">❌</span> Have access to your LinkedIn credentials or session</li>
+            <li><span class="icon-no">❌</span> Share data with external third-party services (other than LinkedIn as the data source)</li>
+            <li><span class="icon-no">❌</span> Sell or rent candidate data</li>
+            <li><span class="icon-no">❌</span> Use data for advertising or marketing purposes outside recruitment activities</li>
+            <li><span class="icon-no">❌</span> Transmit data to any systems other than our internal Hive recruitment platform</li>
         </ul>
 
-        <h3>3.3 Your Backend API</h3>
-        <p>When you click "Send to Hive", the harvested data is sent via HTTPS POST request to:</p>
-        <pre><code>YOUR_CONFIGURED_API_ENDPOINT/api/candidateApp/create-candidate-from-linkedin</code></pre>
-        <p><strong>You control:</strong></p>
-        <ul>
-            <li>Where this data is sent (you configure the API endpoint)</li>
-            <li>How it's stored (on your own backend/database)</li>
-            <li>Who has access to it (your backend permissions)</li>
-            <li>How long it's retained (your data retention policy)</li>
-        </ul>
-
-        <h2>4. Data Storage</h2>
+        <h2>5. Data Storage and Retention</h2>
         
-        <h3>4.1 Browser Local Storage</h3>
+        <h3>5.1 Browser Local Storage</h3>
         <p>Hive stores the following <strong>locally in your browser only</strong>:</p>
         <ul>
-            <li><strong>Access Token:</strong> For authenticating with your backend API</li>
-            <li><strong>API Endpoint URL:</strong> The base URL of your backend</li>
+            <li><strong>Access Token:</strong> For authenticating with our Hive recruitment system</li>
+            <li><strong>Session Data:</strong> Temporary session information for maintaining login state</li>
         </ul>
-        <p>This data is stored using Chrome's <code>chrome.storage.local</code> API and never leaves your device unless you explicitly uninstall the extension or clear browser data.</p>
+        <p>This data is stored using Chrome's <code>chrome.storage.local</code> API and is cleared when you log out or uninstall the extension.</p>
 
-        <h3>4.2 No Remote Storage</h3>
-        <p>Hive does <strong>not</strong> maintain any databases, servers, or cloud storage infrastructure. All harvested data goes directly from your browser to your configured backend.</p>
-
-        <h2>5. Data Sharing and Third Parties</h2>
-        
-        <h3>5.1 LinkedIn</h3>
-        <p>Hive accesses publicly available LinkedIn profile information displayed in your browser. We do not:</p>
+        <h3>5.2 Hive Recruitment System Storage</h3>
+        <p>Candidate data sent via "Send to Hive" is stored in our internal recruitment database according to:</p>
         <ul>
-            <li>Use LinkedIn's official API</li>
-            <li>Transmit any data to LinkedIn</li>
-            <li>Modify or interact with LinkedIn's services beyond reading displayed content</li>
+            <li>Our organization's data retention policies</li>
+            <li>Applicable employment and recruitment regulations</li>
+            <li>Data protection laws (GDPR, CCPA, PDPA, etc.)</li>
         </ul>
-
-        <h3>5.2 Your Backend API</h3>
-        <p>When you click "Send to Hive", data is transmitted to <strong>your configured backend only</strong>. You are responsible for:</p>
-        <ul>
-            <li>The security of your backend API</li>
-            <li>Compliance with data protection laws (GDPR, CCPA, etc.)</li>
-            <li>How your backend stores and uses the harvested data</li>
-        </ul>
-
-        <h3>5.3 No Other Third Parties</h3>
-        <p>Hive does not share data with:</p>
-        <ul>
-            <li>Analytics services</li>
-            <li>Advertising networks</li>
-            <li>Data brokers</li>
-            <li>Any other third parties</li>
-        </ul>
+        <p><strong>Data Retention:</strong> Candidate records are retained for the duration necessary for recruitment purposes and as required by law. Contact your HR department or data protection officer for specific retention periods.</p>
 
         <h2>6. Data Security</h2>
         
         <h3>6.1 In-Browser Security</h3>
         <ul>
             <li>All data extraction happens in your browser's isolated extension context</li>
-            <li>Data is transmitted to your backend via <strong>HTTPS only</strong> (if your backend uses HTTPS)</li>
+            <li>Data is transmitted to our Hive system via <strong>HTTPS encryption</strong></li>
             <li>Authentication tokens are stored securely using Chrome's storage API</li>
+            <li>No data is cached or stored outside your browser except in our secure Hive system</li>
         </ul>
 
-        <h3>6.2 Your Responsibility</h3>
-        <p>Since you control the backend API, <strong>you are responsible for</strong>:</p>
+        <h3>6.2 Hive System Security</h3>
+        <p>Our Hive recruitment system employs industry-standard security measures:</p>
         <ul>
-            <li>Securing your API endpoint (HTTPS, authentication, authorization)</li>
-            <li>Protecting harvested data in your database</li>
-            <li>Compliance with data protection regulations</li>
-            <li>Access controls and user permissions</li>
+            <li>Encrypted data transmission (HTTPS/TLS)</li>
+            <li>Access controls and authentication</li>
+            <li>Role-based permissions for recruitment consultants</li>
+            <li>Regular security audits and updates</li>
+            <li>Secure database infrastructure</li>
         </ul>
 
-        <h2>7. User Rights and Controls</h2>
+        <h2>7. Access Control and Permissions</h2>
         
-        <h3>7.1 Data Review Before Sending</h3>
+        <h3>7.1 Who Can Access Harvested Data</h3>
+        <ul>
+            <li><strong>Authorized Recruitment Consultants:</strong> Only employees with valid Hive system credentials can access candidate data</li>
+            <li><strong>Role-Based Access:</strong> Access to candidate records is controlled by organizational roles and permissions</li>
+            <li><strong>Audit Trails:</strong> All access and modifications to candidate data are logged</li>
+        </ul>
+
+        <h3>7.2 Your Access Rights (as a Consultant)</h3>
+        <ul>
+            <li>You can view and edit candidate records you've created</li>
+            <li>You must have valid Hive system authentication</li>
+            <li>Your access may be revoked if your employment status changes</li>
+        </ul>
+
+        <h2>8. User Rights and Controls</h2>
+        
+        <h3>8.1 For Consultants Using the Extension</h3>
+        <p><strong>Data Review Before Sending:</strong></p>
         <ul>
             <li>You can <strong>review all harvested data</strong> in the extension UI before sending it</li>
             <li>You can <strong>edit</strong> any fields (name, email, phone, experience, education)</li>
             <li>You can <strong>choose not to send</strong> data by closing the extension without clicking "Send to Hive"</li>
         </ul>
 
-        <h3>7.2 Clear Data</h3>
+        <p><strong>Clear Data:</strong></p>
         <ul>
             <li>Click the <strong>"Clear"</strong> button to remove all data from the extension form</li>
-            <li>Uninstall the extension to remove all locally stored settings and tokens</li>
+            <li>Log out to clear authentication tokens</li>
+            <li>Uninstall the extension to remove all locally stored settings</li>
         </ul>
 
-        <h3>7.3 Access and Deletion</h3>
-        <p>To request deletion of data sent to your backend:</p>
+        <h3>8.2 For Candidates (Individuals Whose Data Is Collected)</h3>
+        <p><strong>Access and Correction:</strong></p>
         <ul>
-            <li>Contact your organization's backend administrator (you control this data)</li>
-            <li>Hive itself has no access to this data and cannot delete it</li>
+            <li>Candidates may request to access their data stored in our recruitment system</li>
+            <li>Candidates may request corrections to inaccurate information</li>
+            <li>Contact: <a href="mailto:hr@hrnetgroup.com">hr@hrnetgroup.com</a></li>
         </ul>
 
-        <h2>8. Compliance with LinkedIn Terms of Service</h2>
+        <p><strong>Right to Erasure:</strong></p>
+        <ul>
+            <li>Candidates may request deletion of their data (subject to legal retention requirements)</li>
+            <li>Requests should be directed to our HR department or data protection officer</li>
+        </ul>
+
+        <p><strong>Objection to Processing:</strong></p>
+        <ul>
+            <li>Candidates may object to their data being used for recruitment purposes</li>
+            <li>We will honor such requests unless we have compelling legitimate grounds to continue processing</li>
+        </ul>
+
+        <h2>9. Compliance with LinkedIn Terms of Service</h2>
         
-        <h3>8.1 Responsible Use</h3>
+        <h3>9.1 Responsible Use - For Consultants</h3>
         <p>By using Hive, you agree to:</p>
         <ul>
             <li>Respect LinkedIn's Terms of Service</li>
-            <li>Only extract data from profiles you have legitimate access to</li>
-            <li>Use harvested data for lawful purposes only (recruitment, research, business development)</li>
-            <li>Comply with applicable data protection laws (GDPR, CCPA, etc.)</li>
+            <li>Only extract data from profiles you have legitimate access to view</li>
+            <li>Use harvested data solely for lawful recruitment purposes</li>
+            <li>Comply with applicable data protection laws (GDPR, CCPA, PDPA, etc.)</li>
+            <li>Follow organizational policies on candidate data handling</li>
         </ul>
 
-        <h3>8.2 Rate Limiting</h3>
+        <h3>9.2 Rate Limiting</h3>
         <p>LinkedIn may impose rate limits or restrict accounts that excessively scrape profiles. We recommend:</p>
         <ul>
             <li>Using Hive responsibly (avoid bulk scraping)</li>
-            <li>Respecting LinkedIn's robots.txt and terms</li>
-            <li>Implementing appropriate delays between harvests</li>
+            <li>Respecting LinkedIn's terms of service</li>
+            <li>Implementing appropriate delays between harvests (max 8 profiles/hour, 35/day recommended)</li>
         </ul>
 
-        <h2>9. International Data Transfers</h2>
-        <p>If your backend API is hosted in a different country than where you're using the extension:</p>
+        <h3>9.3 Legitimate Interest</h3>
+        <p>We collect LinkedIn profile data based on our legitimate interest in recruitment activities. This is balanced against the rights and freedoms of candidates, and we process only data necessary for recruitment purposes.</p>
+
+        <h2>10. International Data Transfers</h2>
+        <p><strong>Data Location:</strong> Our Hive recruitment system is hosted in Singapore. If you are using the extension from a different jurisdiction:</p>
         <ul>
-            <li>Data will be transferred internationally when you click "Send to Hive"</li>
-            <li>You are responsible for ensuring compliance with cross-border data transfer regulations (e.g., GDPR Chapter V)</li>
+            <li>Data will be transferred to our system's hosting location</li>
+            <li>We implement appropriate safeguards for international data transfers</li>
+            <li>All transfers comply with GDPR Chapter V and other applicable regulations</li>
         </ul>
 
-        <h2>10. Children's Privacy</h2>
-        <p>Hive is not intended for use by individuals under 18 years of age. We do not knowingly collect data from children.</p>
+        <h2>11. Data Protection Officer / Contact</h2>
+        <p>For questions, concerns, or requests regarding:</p>
+        <ul>
+            <li><strong>Data access, correction, or deletion:</strong> Contact your HR department or <a href="mailto:hr@hrnetgroup.com">hr@hrnetgroup.com</a></li>
+            <li><strong>Privacy concerns:</strong> Contact our Data Protection Officer at <a href="mailto:dpo@hrnetgroup.com">dpo@hrnetgroup.com</a></li>
+            <li><strong>Technical issues with the extension:</strong> Contact IT support</li>
+        </ul>
 
-        <h2>11. Changes to This Policy</h2>
+        <h2>12. Legal Basis for Processing</h2>
+        <p>We process personal data under the following legal bases:</p>
+        <ul>
+            <li><strong>Legitimate Interest:</strong> Recruitment activities and talent acquisition</li>
+            <li><strong>Contract:</strong> Employment contracts and recruitment agreements</li>
+            <li><strong>Legal Obligation:</strong> Compliance with employment and record-keeping laws</li>
+            <li><strong>Consent:</strong> Where explicitly obtained from candidates</li>
+        </ul>
+
+        <h2>13. Children's Privacy</h2>
+        <p>Hive is not intended for use by individuals under 18 years of age. We do not knowingly collect data from children. The extension is designed for professional recruitment purposes only.</p>
+
+        <h2>14. Changes to This Policy</h2>
         <p>We may update this Privacy Policy from time to time. Changes will be indicated by:</p>
         <ul>
             <li>Updating the "Last Updated" date at the top of this document</li>
-            <li>Notifying users via extension update notes (if significant changes occur)</li>
+            <li>Notifying consultants via internal communication channels (if significant changes occur)</li>
         </ul>
         <p>Continued use of Hive after changes constitutes acceptance of the updated policy.</p>
 
-        <h2>12. Contact Information</h2>
-        <p>For questions, concerns, or requests regarding this Privacy Policy:</p>
+        <h2>15. Your Consent and Responsibilities</h2>
+        
+        <h3>15.1 As a Consultant Using Hive</h3>
+        <p>By using Hive, you acknowledge that:</p>
         <ul>
-            <li><strong>Developer Contact:</strong>
-                <ul>
-                    <li>Email: <a href="mailto:your-email@domain.com">your-email@domain.com</a></li>
-                    <li>GitHub: <a href="https://github.com/your-org/hive-bee-extension2">https://github.com/your-org/hive-bee-extension2</a></li>
-                </ul>
-            </li>
-            <li><strong>For data-related requests</strong> (access, deletion, modification):
-                <ul>
-                    <li>Contact your organization's backend administrator (Hive does not store your data)</li>
-                </ul>
-            </li>
+            <li>You have read and understood this Privacy Policy</li>
+            <li>You will use the extension responsibly and in compliance with organizational policies</li>
+            <li>You will respect LinkedIn's Terms of Service</li>
+            <li>You understand your obligations under data protection laws</li>
+            <li>You will handle candidate data securely and confidentially</li>
         </ul>
 
-        <h2>13. Legal Disclaimer</h2>
-        <p>Hive is provided "as is" without warranties. You are solely responsible for:</p>
+        <h3>15.2 Consequences of Misuse</h3>
+        <p>Misuse of Hive or improper handling of candidate data may result in:</p>
+        <ul>
+            <li>Revocation of access to the extension and Hive system</li>
+            <li>Disciplinary action per organizational policies</li>
+            <li>Legal consequences under applicable data protection laws</li>
+        </ul>
+
+        <h2>16. Legal Disclaimer</h2>
+        <p>Hive is provided as an internal tool for recruitment purposes. The organization is responsible for:</p>
         <ul>
             <li>Compliance with LinkedIn's Terms of Service</li>
-            <li>Compliance with applicable data protection laws (GDPR, CCPA, etc.)</li>
-            <li>The security and use of data sent to your backend</li>
-            <li>Any consequences of using Hive for unauthorized or unlawful purposes</li>
+            <li>Compliance with applicable data protection laws (GDPR, CCPA, PDPA, etc.)</li>
+            <li>The security and appropriate use of candidate data</li>
+            <li>Training consultants on proper data handling practices</li>
+            <li>Responding to data subject access requests and complaints</li>
         </ul>
-
-        <h2>14. Your Consent</h2>
-        <p>By installing and using Hive, you acknowledge that you have read and understood this Privacy Policy and agree to its terms.</p>
 
         <hr style="margin: 40px 0; border: none; border-top: 1px solid #ddd;">
 
         <div class="summary-box">
             <h2>📋 Summary</h2>
             <ul>
-                <li><span class="icon">✅</span> All data processing happens in your browser</li>
-                <li><span class="icon">✅</span> No cloud storage or third-party services</li>
-                <li><span class="icon">✅</span> Data sent only to YOUR configured backend</li>
-                <li><span class="icon">✅</span> You control where data goes and how it's stored</li>
-                <li><span class="icon">✅</span> We have zero access to your harvested data</li>
+                <li>🏢 <strong>Internal Tool:</strong> Hive is for authorized recruitment consultants only</li>
+                <li>🔐 <strong>Authentication Required:</strong> Users must log in to our Hive recruitment system</li>
+                <li>📊 <strong>Data Goes to Our System:</strong> All harvested data is stored in our proprietary recruitment database</li>
+                <li>✅ <strong>Controlled Access:</strong> Only authorized personnel can view candidate data</li>
+                <li>🔒 <strong>Secure Transmission:</strong> All data is encrypted in transit (HTTPS)</li>
+                <li>📋 <strong>Recruitment Use Only:</strong> Data is used for candidate evaluation, interviews, and communication</li>
+                <li>⚖️ <strong>Compliance:</strong> We follow data protection laws and respect candidate rights</li>
+                <li>🚫 <strong>No Third Parties:</strong> Data is not shared with external services</li>
             </ul>
         </div>
     </div>
