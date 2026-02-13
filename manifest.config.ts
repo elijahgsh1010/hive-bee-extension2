@@ -33,8 +33,7 @@ export default {
     {
       all_frames: false,
       js: ["src/content-script/index.ts"],
-      // matches: ["*://*/*"],
-      matches: ["https://dev.hive.hrnetgroup.com/*", "https://www.linkedin.com/*", "http://localhost:5050/*", "https://hive.hrnetgroup.com/*"],
+      matches: ["https://www.linkedin.com/*", "https://hive.hrnetgroup.com/*"],
     },
   ],
   side_panel: {
@@ -43,7 +42,7 @@ export default {
   devtools_page: "src/devtools/index.html",
   options_page: "src/ui/options-page/index.html",
   offline_enabled: true,
-  host_permissions: ["<all_urls>"],
+  host_permissions: ["https://www.linkedin.com/*", "https://hive.hrnetgroup.com/*"],
   permissions: ["storage", "tabs", "background", "sidePanel", "activeTab"],
   web_accessible_resources: [
     {
