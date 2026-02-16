@@ -538,7 +538,7 @@ input {
 }
 
 .btn-clear {
-  width: 77%;
+  width: 73%;
   background-color: #ec4899;
   color: white;
   border: none;

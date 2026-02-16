@@ -42,7 +42,7 @@ export default {
   devtools_page: "src/devtools/index.html",
   options_page: "src/ui/options-page/index.html",
   offline_enabled: true,
-  host_permissions: ["https://www.linkedin.com/*", "https://hive.hrnetgroup.com/*"],
+  host_permissions: ["https://www.linkedin.com/*", "https://hive.hrnetgroup.com/*", "https://api.hive.hrnetgroup.com/*"],
   permissions: ["storage", "tabs", "background", "sidePanel", "activeTab"],
   web_accessible_resources: [
     {
