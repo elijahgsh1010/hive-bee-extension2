@@ -25,8 +25,16 @@ const photoUrl = ref('');
 onMounted(async () => {
   console.log('onMounted panel..');
   try {
-    let res = await $api(`/api/userApp/get-user-basic-info`, { method: 'GET' });
-    isLoggedIn.value = true;
+    // Send message to background script instead of calling API directly (avoids CORS)
+    const response = await chrome.runtime.sendMessage({ 
+      type: 'API_GET_USER_BASIC_INFO' 
+    });
+    
+    if (response.success) {
+      isLoggedIn.value = true;
+    } else {
+      throw new Error(response.error);
+    }
   } catch (error) {
     console.log('error: ', error);
     sendTabMessage("LOGIN", () => {});
@@ -105,8 +113,18 @@ const sendToHive = async () => {
     candidateProfilePicture: await getProfilePhotoAsBase64(photoUrl.value),
   };
   try{
-    candidateId.value = await $api(`/api/candidateApp/create-candidate-from-linkedin`, { method: 'POST', body: input });
-    isSucceeded.value = true;
+    // Send message to background script instead of calling API directly (avoids CORS)
+    const response = await chrome.runtime.sendMessage({ 
+      type: 'API_CREATE_CANDIDATE',
+      payload: input 
+    });
+    
+    if (response.success) {
+      candidateId.value = response.data;
+      isSucceeded.value = true;
+    } else {
+      throw new Error(response.error);
+    }
   } catch (error) {
     console.log('error: ', error);
     alert('Error: ' + error.message);

@@ -2,6 +2,8 @@
 // import { extPay } from 'src/utils/payment/extPay'
 // extPay.startBackground()
 
+import { $api } from "../utils/api";
+
 type tabMap = { 
     [url: string]: tabInfo;
 };
@@ -38,6 +40,32 @@ chrome.runtime.onInstalled.addListener(async (opt) => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("in background listener..", message, tabRequests);
+    
+    // API Calls moved here to avoid CORS issues
+    if (message.type === 'API_GET_USER_BASIC_INFO') {
+        $api(`/api/userApp/get-user-basic-info`, { method: 'GET' })
+            .then(res => {
+                sendResponse({ success: true, data: res });
+            })
+            .catch(error => {
+                sendResponse({ success: false, error: error.message });
+            });
+        return true; // Keep the channel open for async response
+    }
+
+    if (message.type === 'API_CREATE_CANDIDATE') {
+        $api(`/api/candidateApp/create-candidate-from-linkedin`, { 
+            method: 'POST', 
+            body: message.payload 
+        })
+            .then(res => {
+                sendResponse({ success: true, data: res });
+            })
+            .catch(error => {
+                sendResponse({ success: false, error: error.message });
+            });
+        return true; // Keep the channel open for async response
+    }
     
     if (message.type === 'LOGIN_TO_HIVE') {
         openTab(message.url, sender?.tab?.id || 0);
