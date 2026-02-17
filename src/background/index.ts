@@ -43,27 +43,59 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     
     // API Calls moved here to avoid CORS issues
     if (message.type === 'API_GET_USER_BASIC_INFO') {
-        $api(`/api/userApp/get-user-basic-info`, { method: 'GET' })
-            .then(res => {
-                sendResponse({ success: true, data: res });
-            })
-            .catch(error => {
-                sendResponse({ success: false, error: error.message });
-            });
+        // Get token from chrome.storage instead of localStorage (not available in background script)
+        chrome.storage.local.get(['hiveAccessToken'], async (result) => {
+            try {
+                const headers: Record<string, string> = {};
+                if (result.hiveAccessToken) {
+                    headers['Authorization'] = `Bearer ${result.hiveAccessToken}`;
+                }
+                
+                const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/userApp/get-user-basic-info`, {
+                    method: 'GET',
+                    headers
+                });
+                
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
+                
+                const data = await res.json();
+                sendResponse({ success: true, data });
+            } catch (error) {
+                sendResponse({ success: false, error: (error as Error).message });
+            }
+        });
         return true; // Keep the channel open for async response
     }
 
     if (message.type === 'API_CREATE_CANDIDATE') {
-        $api(`/api/candidateApp/create-candidate-from-linkedin`, { 
-            method: 'POST', 
-            body: message.payload 
-        })
-            .then(res => {
-                sendResponse({ success: true, data: res });
-            })
-            .catch(error => {
-                sendResponse({ success: false, error: error.message });
-            });
+        // Get token from chrome.storage instead of localStorage (not available in background script)
+        chrome.storage.local.get(['hiveAccessToken'], async (result) => {
+            try {
+                const headers: Record<string, string> = {
+                    'Content-Type': 'application/json'
+                };
+                if (result.hiveAccessToken) {
+                    headers['Authorization'] = `Bearer ${result.hiveAccessToken}`;
+                }
+                
+                const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/candidateApp/create-candidate-from-linkedin`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(message.payload)
+                });
+                
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
+                
+                const data = await res.json();
+                sendResponse({ success: true, data });
+            } catch (error) {
+                sendResponse({ success: false, error: (error as Error).message });
+            }
+        });
         return true; // Keep the channel open for async response
     }
     
