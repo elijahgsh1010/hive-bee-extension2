@@ -42,60 +42,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("in background listener..", message, tabRequests);
     
     // API Calls moved here to avoid CORS issues
+    // Token is passed from content script since localStorage is not available in Service Worker
     if (message.type === 'API_GET_USER_BASIC_INFO') {
-        // Get token from chrome.storage instead of localStorage (not available in background script)
-        chrome.storage.local.get(['hiveAccessToken'], async (result) => {
-            try {
-                const headers: Record<string, string> = {};
-                if (result.hiveAccessToken) {
-                    headers['Authorization'] = `Bearer ${result.hiveAccessToken}`;
-                }
-                
-                const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/userApp/get-user-basic-info`, {
-                    method: 'GET',
-                    headers
-                });
-                
-                if (!res.ok) {
-                    throw new Error(`HTTP ${res.status}`);
-                }
-                
-                const data = await res.json();
-                sendResponse({ success: true, data });
-            } catch (error) {
-                sendResponse({ success: false, error: (error as Error).message });
-            }
-        });
+        callApi(`/api/userApp/get-user-basic-info`, { method: 'GET' }, message.token)
+            .then(res => {
+                sendResponse({ success: true, data: res });
+            })
+            .catch(error => {
+                sendResponse({ success: false, error: error.message });
+            });
         return true; // Keep the channel open for async response
     }
 
     if (message.type === 'API_CREATE_CANDIDATE') {
-        // Get token from chrome.storage instead of localStorage (not available in background script)
-        chrome.storage.local.get(['hiveAccessToken'], async (result) => {
-            try {
-                const headers: Record<string, string> = {
-                    'Content-Type': 'application/json'
-                };
-                if (result.hiveAccessToken) {
-                    headers['Authorization'] = `Bearer ${result.hiveAccessToken}`;
-                }
-                
-                const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/candidateApp/create-candidate-from-linkedin`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify(message.payload)
-                });
-                
-                if (!res.ok) {
-                    throw new Error(`HTTP ${res.status}`);
-                }
-                
-                const data = await res.json();
-                sendResponse({ success: true, data });
-            } catch (error) {
-                sendResponse({ success: false, error: (error as Error).message });
-            }
-        });
+        callApi(`/api/candidateApp/create-candidate-from-linkedin`, { 
+            method: 'POST', 
+            body: message.payload 
+        }, message.token)
+            .then(res => {
+                sendResponse({ success: true, data: res });
+            })
+            .catch(error => {
+                sendResponse({ success: false, error: error.message });
+            });
         return true; // Keep the channel open for async response
     }
     
@@ -147,6 +116,32 @@ function openTab(url: string, mainTabId: number) {
             setTimeout(() => {chrome.tabs.remove(tabId); }, 60000); 
         },
     );
+}
+
+// Helper function to call API with token from content script
+async function callApi(endpoint: string, options: any, token?: string) {
+    try {
+        const headers: Record<string, string> = options.headers || {};
+        
+        // Add authorization header if token is provided
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}${endpoint}`, {
+            ...options,
+            headers
+        });
+        
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.error || `HTTP ${res.status}`);
+        }
+        
+        return await res.json();
+    } catch (error) {
+        throw error;
+    }
 }
 
 self.onerror = function (message, source, lineno, colno, error) {

@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import {$api} from "src/utils/api";
-
 const testStore = useTestStore()
 const { increment, decrement } = testStore
 
@@ -26,8 +24,10 @@ onMounted(async () => {
   console.log('onMounted panel..');
   try {
     // Send message to background script instead of calling API directly (avoids CORS)
+    const token = localStorage.getItem('hiveAccessToken');
     const response = await chrome.runtime.sendMessage({ 
-      type: 'API_GET_USER_BASIC_INFO' 
+      type: 'API_GET_USER_BASIC_INFO',
+      token
     });
     
     if (response.success) {
@@ -114,9 +114,11 @@ const sendToHive = async () => {
   };
   try{
     // Send message to background script instead of calling API directly (avoids CORS)
+    const token = localStorage.getItem('hiveAccessToken');
     const response = await chrome.runtime.sendMessage({ 
       type: 'API_CREATE_CANDIDATE',
-      payload: input 
+      payload: input,
+      token
     });
     
     if (response.success) {
