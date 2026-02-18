@@ -44,27 +44,57 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // API Calls moved here to avoid CORS issues
     // Token is passed from content script since localStorage is not available in Service Worker
     if (message.type === 'API_GET_USER_BASIC_INFO') {
-        callApi(`/api/userApp/get-user-basic-info`, { method: 'GET' }, message.token)
-            .then(res => {
-                sendResponse({ success: true, data: res });
-            })
-            .catch(error => {
-                sendResponse({ success: false, error: error.message });
-            });
+        // Get token from chrome.storage instead of localStorage (not available in background script)
+        chrome.storage.local.get(['hiveAccessToken'], async (result) => {
+            try {
+                const headers: Record<string, string> = {};
+                if (result.hiveAccessToken) {
+                    headers['Authorization'] = `Bearer ${result.hiveAccessToken}`;
+                }
+
+                $api(`/api/userApp/get-user-basic-info`, {
+                    method: 'GET',
+                    headers
+                })
+                .then(res => {
+                    sendResponse({ success: true, data: res });
+                })
+                .catch(error => {
+                    sendResponse({ success: false, error: error.message });
+                });
+
+            } catch (error) {
+                sendResponse({ success: false, error: (error as Error).message });
+            }
+        });
         return true; // Keep the channel open for async response
     }
 
     if (message.type === 'API_CREATE_CANDIDATE') {
-        callApi(`/api/candidateApp/create-candidate-from-linkedin`, { 
-            method: 'POST', 
-            body: message.payload 
-        }, message.token)
-            .then(res => {
-                sendResponse({ success: true, data: res });
-            })
-            .catch(error => {
-                sendResponse({ success: false, error: error.message });
-            });
+        chrome.storage.local.get(['hiveAccessToken'], async (result) => {
+            try {
+                const headers: Record<string, string> = {
+                    'Content-Type': 'application/json'
+                };
+                if (result.hiveAccessToken) {
+                    headers['Authorization'] = `Bearer ${result.hiveAccessToken}`;
+                }
+
+                $api(`/api/candidateApp/create-candidate-from-linkedin`, {
+                    method: 'POST',
+                    body: message.payload,
+                    headers
+                })
+                .then(res => {
+                    sendResponse({ success: true, data: res });
+                })
+                .catch(error => {
+                    sendResponse({ success: false, error: error.message });
+                });
+            } catch (error) {
+                sendResponse({ success: false, error: (error as Error).message });
+            }
+        });
         return true; // Keep the channel open for async response
     }
     

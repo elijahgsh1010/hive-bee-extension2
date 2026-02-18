@@ -33,7 +33,7 @@ export default {
     {
       all_frames: false,
       js: ["src/content-script/index.ts"],
-      matches: ["https://www.linkedin.com/*", "https://hive.hrnetgroup.com/*"],
+      matches: ["https://www.linkedin.com/*", "https://hive.hrnetgroup.com/*", "http://localhost:5050/*"],
     },
   ],
   side_panel: {

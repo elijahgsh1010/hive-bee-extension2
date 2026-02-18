@@ -10,6 +10,14 @@ const router = useRouter()
 export const $api = ofetch.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
     async onRequest({ options }) {
+        const headers = (options.headers as Record<string, string>) || {};
+
+        // 1️⃣ If caller already provided Authorization → respect it
+        if (headers.Authorization) {
+            options.headers = headers;
+            return;
+        }
+
         const accessToken = localStorage.getItem('hiveAccessToken');
         if (accessToken) {
             options.headers = {
