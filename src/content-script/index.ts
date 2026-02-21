@@ -447,34 +447,36 @@ function getContactInfo2() {
 }
 
 function getNameAndDesignation() {
-    // Find the name container
-    const nameContainer = document.querySelector<HTMLElement>(
-        '[data-view-name="profile-top-card-verified-badge"]'
+    // Find the section with the profile card component
+    const profileSection = document.querySelector<HTMLElement>(
+        'section[componentkey*="com.linkedin.sdui.profile.card"]'
     );
 
-    // Extract name
-    const name = nameContainer
-        ?.querySelector<HTMLHeadingElement>('h2')
-        ?.textContent
-        ?.trim() ?? '';
+    if (!profileSection) {
+        console.warn('[HiveBee] Profile card section not found');
+        return { name: '', designation: '', photoUrl: null };
+    }
 
-    // Walk forward to find the real designation paragraph
+    // Extract name from the first h2 tag
+    const nameElement = profileSection.querySelector<HTMLHeadingElement>('h2');
+    const name = nameElement?.textContent?.trim() ?? '';
+
+    // Extract designation from the first paragraph that doesn't contain "·"
     let designation = '';
-    let current = nameContainer?.parentElement?.nextElementSibling ?? null;
-
-    while (current) {
-        if (
-            current.tagName === 'P' &&
-            current.textContent &&
-            !current.textContent.includes('·')
-        ) {
-            designation = current.textContent.trim();
+    const paragraphs = Array.from(profileSection.querySelectorAll('p'));
+    
+    for (const p of paragraphs) {
+        const text = p.textContent?.trim() ?? '';
+        // Skip empty, connection count, and separator lines
+        if (text && !text.includes('·') && !text.match(/^\d+\s*(connection|st|nd|rd|th)/i)) {
+            designation = text;
             break;
         }
-        current = current.nextElementSibling;
     }
 
     const photoUrl = getProfilePhoto();
+
+    console.log('[HiveBee] Profile extracted:', { name, designation, photoUrl });
 
     return { name, designation, photoUrl };
 }
